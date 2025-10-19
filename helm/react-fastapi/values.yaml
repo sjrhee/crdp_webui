@@ -1,0 +1,43 @@
+images:
+  backend: "backend:latest"
+  frontend: "frontend:latest"
+
+backend:
+  replicas: 1
+  env:
+    APP_NAME: "FastAPI Starter"
+    DEBUG: "true"
+    ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+    ALGORITHM: "HS256"
+    SECRET_KEY: "change_me_in_secret"
+    CORS_ORIGINS: "[\"http://localhost:5173\",\"http://127.0.0.1:5173\"]"
+  service:
+    type: ClusterIP
+    port: 8000
+  secret:
+    enabled: false
+    name: ""
+    secretKey: "please_change_me"
+
+frontend:
+  replicas: 1
+  service:
+    type: ClusterIP
+    port: 80
+
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  hosts:
+    - host: localhost
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+        - path: /api
+          pathType: Prefix
+          service: backend
+  tls: []
+
+resources: {}

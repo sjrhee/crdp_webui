@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "react-fastapi.fullname" . }}-backend
+  labels:
+    app.kubernetes.io/name: {{ include "react-fastapi.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: backend
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "react-fastapi.name" . }}
+      app.kubernetes.io/component: backend
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "react-fastapi.name" . }}
+        app.kubernetes.io/component: backend
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: backend
+          image: {{ .Values.images.backend }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: APP_NAME
+              value: {{ .Values.backend.env.APP_NAME | quote }}
+            - name: DEBUG
+              value: {{ .Values.backend.env.DEBUG | quote }}
+            - name: ACCESS_TOKEN_EXPIRE_MINUTES
+              value: {{ .Values.backend.env.ACCESS_TOKEN_EXPIRE_MINUTES | quote }}
+            - name: ALGORITHM
+              value: {{ .Values.backend.env.ALGORITHM | quote }}
+            - name: SECRET_KEY
+              {{- if .Values.backend.secret.enabled }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default (printf "%s-backend" (include "react-fastapi.fullname" .)) .Values.backend.secret.name }}
+                  key: SECRET_KEY
+              {{- else }}
+              value: {{ .Values.backend.env.SECRET_KEY | quote }}
+              {{- end }}
+            - name: CORS_ORIGINS
+              value: {{ .Values.backend.env.CORS_ORIGINS | quote }}
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "react-fastapi.fullname" . }}-backend
+spec:
+  type: {{ .Values.backend.service.type }}
+  selector:
+    app.kubernetes.io/name: {{ include "react-fastapi.name" . }}
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: {{ .Values.backend.service.port }}
+      targetPort: 8000

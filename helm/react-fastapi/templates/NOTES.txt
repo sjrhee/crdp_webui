@@ -1,0 +1,11 @@
+1. 설치
+   helm install myapp ./helm/react-fastapi --set images.backend=<your-backend-image> --set images.frontend=<your-frontend-image>
+
+2. 접근
+   - Ingress가 활성화되었다면: http://<HOST>/
+   - 로컬 포트포워딩 예시:
+     kubectl port-forward svc/myapp-react-fastapi-frontend 5173:80
+     kubectl port-forward svc/myapp-react-fastapi-backend 8000:8000
+
+3. 환경
+   - backend.env 값은 values.yaml에서 조정하거나, Secret/ConfigMap으로 분리하여 주입하는 것을 권장합니다.
