@@ -9,6 +9,7 @@ backend:
     DEBUG: "true"
     ACCESS_TOKEN_EXPIRE_MINUTES: "60"
     ALGORITHM: "HS256"
+    # SECRET_KEY는 실제 배포에서 Secret로 주입 권장
     SECRET_KEY: "change_me_in_secret"
     CORS_ORIGINS: "[\"http://localhost:5173\",\"http://127.0.0.1:5173\"]"
   service:

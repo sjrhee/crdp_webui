@@ -21,7 +21,6 @@ class Settings(BaseSettings):
     CRDP_API_PORT: int = 32082
     CRDP_PROTECTION_POLICY: str = "P03"
     CRDP_SAMPLE_DATA: str = "1234567890123"
-
     # Accept JSON array or comma-separated string for CORS_ORIGINS
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

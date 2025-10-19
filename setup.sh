@@ -67,8 +67,11 @@ EOF
 
   # CORS_ORIGINS가 콤마 문자열이면 JSON 배열로 마이그레이션
   if grep -qE '^CORS_ORIGINS="?[^\[][^\n]*,.*"?$' "$env_file"; then
+    # 값만 추출
     raw=$(grep '^CORS_ORIGINS=' "$env_file" | sed 's/^CORS_ORIGINS=//')
-    raw=${raw%\"}; raw=${raw#\"}
+    # 양끝 따옴표 제거
+  raw=${raw%\"}; raw=${raw#\"}
+    # 콤마로 분리해 JSON 배열 생성
     json='['
     IFS=',' read -ra parts <<< "$raw"
     for i in "${!parts[@]}"; do
@@ -82,6 +85,7 @@ EOF
     log "CORS_ORIGINS를 JSON 배열로 변환"
   fi
 
+  # SECRET_KEY 자동 갱신 (change_me* 일 경우에만)
   if grep -qE '^SECRET_KEY=change_me' "$env_file"; then
     local secret
     secret="$(gen_secret)"
@@ -92,7 +96,9 @@ EOF
 
 load_nvm() {
   if [ -s "$NVM_DIR/nvm.sh" ]; then
+    # 일부 nvm 스크립트는 정의되지 않은 변수를 참조하므로 -u를 잠시 해제
     set +u
+    # shellcheck disable=SC1090
     . "$NVM_DIR/nvm.sh"
     set -u
   else
@@ -104,12 +110,18 @@ setup_node() {
   log "Node.js(nvm) 준비 중"
   if ! load_nvm; then
     log "nvm 미설치: 설치 진행"
+    # 설치 스니펫
     curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
     if ! load_nvm; then
-      if [ -f "$HOME/.bashrc" ]; then . "$HOME/.bashrc" || true; fi
+      # 일부 환경은 ~/.bashrc 로드 필요
+      if [ -f "$HOME/.bashrc" ]; then
+        # shellcheck disable=SC1090
+        . "$HOME/.bashrc" || true
+      fi
       load_nvm || { err "nvm 로드 실패"; exit 1; }
     fi
   fi
+  # nvm 동작 시 -u 해제 필요
   set +u
   nvm install --lts >/dev/null
   nvm use --lts >/dev/null
@@ -129,6 +141,10 @@ setup_frontend() {
   fi
   (cd "$FRONTEND_DIR" && npm i && npm i axios react-router-dom)
 
+<<<<<<< HEAD
+=======
+  # frontend/.env
+>>>>>>> 5776278 (feat: frontend auth flow, setup.sh, docker & helm charts; tests added)
   if [ ! -f "$FRONTEND_DIR/.env" ]; then
     cat > "$FRONTEND_DIR/.env" <<EOF
 VITE_API_BASE_URL=http://localhost:8000
