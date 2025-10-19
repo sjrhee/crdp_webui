@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.python-version
+*.egg-info/
+
+# FastAPI/UVicorn
+*.sqlite3
+
+# Node/React/Vite
+node_modules/
+dist/
+*.log
+
+# Env
+.env
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local venvs
+backend/.venv/
