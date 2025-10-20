@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import axios, { AxiosError } from 'axios';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('demo');
@@ -15,8 +16,13 @@ const Login: React.FC = () => {
     try {
       await login(username, password);
       navigate('/');
-    } catch (e: any) {
-      setError(e?.response?.data?.detail || '로그인 실패');
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const ax = err as AxiosError<{ detail?: string }>;
+        setError(ax.response?.data?.detail || '로그인 실패');
+      } else {
+        setError('로그인 실패');
+      }
     }
   };
 

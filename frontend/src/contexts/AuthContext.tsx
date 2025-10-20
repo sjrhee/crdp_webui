@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await api.get('/api/auth/me');
       setUser(res.data);
-    } catch (e) {
+    } catch {
       // invalid token
       localStorage.removeItem('access_token');
       setToken(null);
@@ -47,7 +47,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const accessToken = res.data?.access_token as string;
     localStorage.setItem('access_token', accessToken);
     setToken(accessToken);
-    await fetchMe();
+    // Optionally set user optimistically; backend /me will refresh later via effect
+    setUser({ username });
   };
 
   const logout = () => {
@@ -61,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');

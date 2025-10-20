@@ -1,0 +1,11 @@
+ingress:
+  enabled: true
+  hosts:
+    - host: crdp.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+        - path: /api
+          pathType: Prefix
+          service: backend

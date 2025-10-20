@@ -31,3 +31,42 @@ uvicorn app.main:app --reload --port 8000
 ```
 pytest -q
 ```
+
+## CRDP Protect integration
+
+New endpoints:
+- `POST /api/protect` → external CRDP Protect API
+- `POST /api/reveal` → external CRDP Reveal API
+
+Optional JSON body to override (protect):
+
+```
+{
+	"host": "192.168.0.231",
+	"port": 32082,
+	"policy": "P03",
+	"data": "1234567890123"
+}
+```
+
+Environment variables (backend/.env):
+
+```
+CRDP_API_HOST=192.168.0.231
+CRDP_API_PORT=32082
+CRDP_PROTECTION_POLICY=P03
+CRDP_SAMPLE_DATA=1234567890123
+```
+
+Reveal body example:
+
+```
+{
+	"host": "192.168.0.231",
+	"port": 32082,
+	"policy": "P03",
+	"protected_data": "<protected string>",
+	"username": "user1",            // optional
+	"external_version": "1001002"   // optional
+}
+```
