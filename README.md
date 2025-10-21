@@ -172,6 +172,27 @@ kubectl get pods,svc,ingress -n crdp-webui
 - MetalLB는 LoadBalancer IP를 할당합니다. DNS가 없으면 IP로 직접 접근 가능합니다.
 - 호스트명 사용 시 클라이언트 `/etc/hosts`에 `192.168.0.240 crdp-webui.local` 추가(예시 IP).
 
+#### 빌드 후 Helm 배포(원클릭 스크립트)
+
+이미지를 빌드/푸시하고 Helm으로 배포까지 한 번에 실행하는 스크립트를 제공합니다.
+
+```bash
+# (옵션) 환경 지정
+export REGISTRY=192.168.0.231:5001
+export TAG=$(date +%Y%m%d-%H%M%S)   # 미지정 시 자동 생성
+
+# 실행
+bash scripts/build_and_deploy.sh
+
+# (옵션) 빌드/푸시 스킵
+# SKIP_BUILD=1 SKIP_PUSH=1 bash scripts/build_and_deploy.sh
+```
+
+스크립트는 다음을 수행합니다.
+- backend/frontend Docker 이미지 빌드 → REGISTRY로 푸시
+- Helm upgrade/install 실행(`values-local-registry.yaml` + 이미지 태그/레지스트리 `--set` 오버라이드)
+- 현재 네임스페이스 리소스 요약 출력
+
 ### 언인스톨
 
 ```bash
