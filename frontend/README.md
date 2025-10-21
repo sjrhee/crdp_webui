@@ -1,249 +1,496 @@
-# Frontend - React + Vite + TypeScript WebUI# React + TypeScript + Vite
+# Frontend - CRDP React Web UI# Frontend - React + Vite + TypeScript WebUI# React + TypeScript + Vite
 
 
 
-Vite + React 19 + TypeScript로 구축한 CRDP Protect/Reveal 웹 UI입니다.This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite + TypeScript 기반 대화형 웹 인터페이스
 
 
 
----Currently, two official plugins are available:
+---Vite + React 19 + TypeScript로 구축한 CRDP Protect/Reveal 웹 UI입니다.This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 
 
-## 🏗️ 구조- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+## 🚀 빠른 시작
 
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-```
 
-frontend/## React Compiler
+### 1. 설치---Currently, two official plugins are available:
 
-├── src/
 
-│   ├── main.tsx                 # React 진입점The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-│   ├── App.tsx                  # 메인 앱 컴포넌트
-
-│   ├── App.css## Expanding the ESLint configuration
-
-│   ├── index.css                # 전역 스타일 (디자인 시스템)
-
-│   ├── index.htmlIf you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-│   ├── pages/
-
-│   │   └── ProtectReveal.tsx    # Protect/Reveal 페이지 (메인)```js
-
-│   ├── components/export default defineConfig([
-
-│   │   └── ProtectedRoute.tsx   # (참고: 현재 미사용)  globalIgnores(['dist']),
-
-│   ├── contexts/  {
-
-│   │   └── AuthContext.tsx      # (참고: 현재 미사용)    files: ['**/*.{ts,tsx}'],
-
-│   ├── lib/    extends: [
-
-│   │   └── api.ts              # Axios API 클라이언트      // Other configs...
-
-│   └── assets/
-
-├── public/      // Remove tseslint.configs.recommended and replace with this
-
-├── package.json      tseslint.configs.recommendedTypeChecked,
-
-├── vite.config.ts              # Vite 설정      // Alternatively, use this for stricter rules
-
-├── tsconfig.json               # TypeScript 설정      tseslint.configs.strictTypeChecked,
-
-├── tsconfig.app.json           # App TypeScript 설정      // Optionally, add this for stylistic rules
-
-├── tsconfig.node.json          # Node TypeScript 설정      tseslint.configs.stylisticTypeChecked,
-
-├── eslint.config.js            # ESLint 설정
-
-├── nginx.conf                  # Nginx 설정 (프로덕션)      // Other configs...
-
-├── Dockerfile                  # 컨테이너 이미지    ],
-
-└── README.md                   # 이 파일    languageOptions: {
-
-```      parserOptions: {
-
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-
----        tsconfigRootDir: import.meta.dirname,
-
-      },
-
-## 🚀 빠른 시작      // other options...
-
-    },
-
-### 로컬 개발 환경  },
-
-])
-
-#### 1. 의존성 설치```
 
 ```bash
 
-cd frontendYou can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
 npm install
 
-``````js
+```## 🏗️ 구조- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
 
-// eslint.config.js
 
-#### 2. 환경 변수 설정 (선택)import reactX from 'eslint-plugin-react-x'
 
-```bashimport reactDom from 'eslint-plugin-react-dom'
+### 2. 개발 서버- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-# .env (또는 .env.local)
 
-VITE_API_BASE_URL=http://localhost:8000export default defineConfig([
 
-```  globalIgnores(['dist']),
+```bash```
 
-  {
+npm run dev
 
-#### 3. 개발 서버 시작    files: ['**/*.{ts,tsx}'],
+```frontend/## React Compiler
 
-```bash    extends: [
 
-npm run dev      // Other configs...
 
-```      // Enable lint rules for React
+접속: http://localhost:5173/protect-reveal├── src/
 
-      reactX.configs['recommended-typescript'],
 
-#### 4. 접속      // Enable lint rules for React DOM
 
-- **WebUI**: http://localhost:5173/protect-reveal      reactDom.configs.recommended,
+### 3. 프로덕션 빌드│   ├── main.tsx                 # React 진입점The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-- **HMR (Hot Module Reload)**: 활성화됨    ],
 
-    languageOptions: {
 
----      parserOptions: {
-
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-
-## 📦 주요 스크립트        tsconfigRootDir: import.meta.dirname,
-
-      },
-
-```bash      // other options...
-
-# 개발 서버 시작    },
-
-npm run dev  },
-
-])
-
-# 프로덕션 빌드```
+```bash│   ├── App.tsx                  # 메인 앱 컴포넌트
 
 npm run build
 
-# Lint 실행
-npm run lint
+npm run preview  # 빌드 결과 미리보기│   ├── App.css## Expanding the ESLint configuration
 
-# 타입 체크
-npm run check
+```
+
+│   ├── index.css                # 전역 스타일 (디자인 시스템)
+
+---
+
+│   ├── index.htmlIf you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+## 🎨 주요 기능
+
+│   ├── pages/
+
+| 기능 | 설명 |
+
+|------|------|│   │   └── ProtectReveal.tsx    # Protect/Reveal 페이지 (메인)```js
+
+| **Protect** | 13자리 숫자 암호화 |
+
+| **Reveal** | 암호화된 토큰 복호화 |│   ├── components/export default defineConfig([
+
+| **Bulk Protect** | 여러 데이터 한 번에 암호화 |
+
+| **Bulk Reveal** | 여러 토큰 한 번에 복호화 |│   │   └── ProtectedRoute.tsx   # (참고: 현재 미사용)  globalIgnores(['dist']),
+
+| **Progress Log** | 백엔드↔CRDP 통신 로그 |
+
+| **설정 저장** | IP, Port, Policy 자동 저장 |│   ├── contexts/  {
+
+
+
+---│   │   └── AuthContext.tsx      # (참고: 현재 미사용)    files: ['**/*.{ts,tsx}'],
+
+
+
+## 📂 구조│   ├── lib/    extends: [
+
+
+
+```│   │   └── api.ts              # Axios API 클라이언트      // Other configs...
+
+frontend/
+
+├── src/│   └── assets/
+
+│   ├── main.tsx                   # 진입점
+
+│   ├── App.tsx                    # 라우터├── public/      // Remove tseslint.configs.recommended and replace with this
+
+│   ├── App.css                    # 글로벌 스타일
+
+│   ├── index.css                  # 디자인 시스템├── package.json      tseslint.configs.recommendedTypeChecked,
+
+│   ├── lib/
+
+│   │   └── api.ts                 # Axios 클라이언트├── vite.config.ts              # Vite 설정      // Alternatively, use this for stricter rules
+
+│   ├── pages/
+
+│   │   └── ProtectReveal.tsx       # 메인 페이지├── tsconfig.json               # TypeScript 설정      tseslint.configs.strictTypeChecked,
+
+│   ├── components/
+
+│   │   └── ProtectedRoute.tsx      # 라우트 보호├── tsconfig.app.json           # App TypeScript 설정      // Optionally, add this for stylistic rules
+
+│   └── contexts/
+
+│       └── AuthContext.tsx         # 인증 상태├── tsconfig.node.json          # Node TypeScript 설정      tseslint.configs.stylisticTypeChecked,
+
+├── public/                        # 정적 파일
+
+├── package.json├── eslint.config.js            # ESLint 설정
+
+├── vite.config.ts
+
+├── tsconfig.json├── nginx.conf                  # Nginx 설정 (프로덕션)      // Other configs...
+
+├── Dockerfile
+
+└── nginx.conf├── Dockerfile                  # 컨테이너 이미지    ],
+
+```
+
+└── README.md                   # 이 파일    languageOptions: {
+
+---
+
+```      parserOptions: {
+
+## 🧩 컴포넌트
+
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+
+### ProtectReveal.tsx
+
+---        tsconfigRootDir: import.meta.dirname,
+
+메인 페이지 - 4개의 주요 섹션으로 구성:
+
+      },
+
+#### 1. ConfigSection
+
+```tsx## 🚀 빠른 시작      // other options...
+
+// IP, Port, Policy 입력
+
+- IP 주소 입력 필드 (기본: 192.168.0.231)    },
+
+- 포트 입력 필드 (기본: 32082)
+
+- 정책 선택 드롭다운 (기본: P03)### 로컬 개발 환경  },
+
+- 자동 저장 (localStorage)
+
+```])
+
+
+
+#### 2. SingleResultBox#### 1. 의존성 설치```
+
+```tsx
+
+// 단일 데이터 처리 결과```bash
+
+- 입력 값 표시
+
+- 결과 값 복사 버튼cd frontendYou can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+- 시간 정보
+
+```npm install
+
+
+
+#### 3. ArrayResultBox``````js
+
+```tsx
+
+// 대량 데이터 처리 결과// eslint.config.js
+
+- 결과 테이블 표시
+
+- 각 항목 복사 버튼#### 2. 환경 변수 설정 (선택)import reactX from 'eslint-plugin-react-x'
+
+- 전체 다운로드 (JSON)
+
+``````bashimport reactDom from 'eslint-plugin-react-dom'
+
+
+
+#### 4. ProgressLog# .env (또는 .env.local)
+
+```tsx
+
+// API 통신 상세 정보VITE_API_BASE_URL=http://localhost:8000export default defineConfig([
+
+- 요청 URL
+
+- 요청/응답 페이로드```  globalIgnores(['dist']),
+
+- 헤더 정보
+
+- HTTP 상태 코드  {
+
+```
+
+#### 3. 개발 서버 시작    files: ['**/*.{ts,tsx}'],
+
+---
+
+```bash    extends: [
+
+## 🌐 API 클라이언트
+
+npm run dev      // Other configs...
+
+**`lib/api.ts`**:
+
+```      // Enable lint rules for React
+
+```typescript
+
+// Base URL 설정      reactX.configs['recommended-typescript'],
+
+const client = createClient(ip: string, port: number)
+
+#### 4. 접속      // Enable lint rules for React DOM
+
+// Protect/Reveal 호출
+
+await client.protect(data, policy)- **WebUI**: http://localhost:5173/protect-reveal      reactDom.configs.recommended,
+
+await client.reveal(protectedData, policy)
+
+await client.protectBulk(dataList, policy)- **HMR (Hot Module Reload)**: 활성화됨    ],
+
+await client.revealBulk(protectedDataList, policy)
+
+```    languageOptions: {
+
+
+
+------      parserOptions: {
+
+
+
+## 🎨 디자인 시스템        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+
+
+
+**`index.css`** 에서 정의:## 📦 주요 스크립트        tsconfigRootDir: import.meta.dirname,
+
+
+
+```css      },
+
+/* 색상 */
+
+--color-primary: #007bff```bash      // other options...
+
+--color-success: #28a745
+
+--color-danger: #dc3545# 개발 서버 시작    },
+
+--color-border: #dee2e6
+
+--color-bg: #f8f9fanpm run dev  },
+
+
+
+/* 타이포그래피 */])
+
+--font-family: system-ui, -apple-system, sans-serif
+
+--font-size-base: 14px# 프로덕션 빌드```
+
+--font-size-lg: 18px
+
+npm run build
+
+/* 간격 */
+
+--space-xs: 4px# Lint 실행
+
+--space-sm: 8pxnpm run lint
+
+--space-md: 16px
+
+--space-lg: 24px# 타입 체크
+
+```npm run check
+
 ```
 
 ---
+
+---
+
+## 📦 의존성
 
 ## 🎯 주요 기능 및 컴포넌트
 
-### 1. ProtectReveal 페이지 (`src/pages/ProtectReveal.tsx`)
+- **react** - UI 라이브러리
 
-**기능:**
-- 🔒 **Protect (암호화)**: 단일 13자리 숫자 암호화
+- **react-dom** - React 렌더링### 1. ProtectReveal 페이지 (`src/pages/ProtectReveal.tsx`)
+
+- **axios** - HTTP 클라이언트
+
+- **vite** - 빌드 도구**기능:**
+
+- **typescript** - 타입 안전성- 🔒 **Protect (암호화)**: 단일 13자리 숫자 암호화
+
 - 🔓 **Reveal (복호화)**: 보호된 토큰 복호화
-- 📦 **Bulk Protect (대량 암호화)**: 여러 데이터 한 번에 암호화
+
+---- 📦 **Bulk Protect (대량 암호화)**: 여러 데이터 한 번에 암호화
+
 - 📦 **Bulk Reveal (대량 복호화)**: 여러 토큰 한 번에 복호화
-- 🔍 **Progress Log**: 백엔드↔CRDP 통신 로그 표시
 
-**구조:**
-```typescript
-// Types
+## 🛠️ 개발 명령어- 🔍 **Progress Log**: 백엔드↔CRDP 통신 로그 표시
+
+
+
+```bash**구조:**
+
+# 개발 서버 실행```typescript
+
+npm run dev// Types
+
 interface ApiResponse { status_code, error, debug }
-interface ProtectResponse extends ApiResponse { protected_data }
-interface RevealResponse extends ApiResponse { data }
+
+# 프로덕션 빌드interface ProtectResponse extends ApiResponse { protected_data }
+
+npm run buildinterface RevealResponse extends ApiResponse { data }
+
 interface BulkProtectResponse extends ApiResponse { protected_data_array }
-interface BulkRevealResponse extends ApiResponse { data_array }
-type ProgressEntry = { stage, debug }
 
-// Components (분리됨)
-- ConfigSection: 설정(IP, Port, Policy) 입력
+# 타입 체크interface BulkRevealResponse extends ApiResponse { data_array }
+
+npm run type-checktype ProgressEntry = { stage, debug }
+
+
+
+# Lint (있으면)// Components (분리됨)
+
+npm run lint- ConfigSection: 설정(IP, Port, Policy) 입력
+
 - SingleResultBox: 단일 결과 표시
-- ArrayResultBox: 배열 결과 표시
 
-// Main Component
+# 빌드 결과 미리보기- ArrayResultBox: 배열 결과 표시
+
+npm run preview
+
+```// Main Component
+
 - ProtectReveal: 메인 페이지 로직
-```
 
-**자동 연결:**
+---```
+
+
+
+## 🐳 Docker 빌드**자동 연결:**
+
 - Protect → 결과가 Reveal 입력칸에 자동 채워짐
-- Bulk Protect → 결과가 Bulk Reveal 입력칸에 자동 채워짐
 
-### 2. API 클라이언트 (`src/lib/api.ts`)
+```bash- Bulk Protect → 결과가 Bulk Reveal 입력칸에 자동 채워짐
 
-```typescript
-import axios from 'axios';
+TAG=$(date +%Y%m%d-%H%M%S)
 
-const api = axios.create({
+docker build -t 192.168.0.231:5001/frontend:$TAG -f frontend/Dockerfile frontend### 2. API 클라이언트 (`src/lib/api.ts`)
+
+docker push 192.168.0.231:5001/frontend:$TAG
+
+echo "Image: 192.168.0.231:5001/frontend:$TAG"```typescript
+
+```import axios from 'axios';
+
+
+
+---const api = axios.create({
+
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
-});
 
-export default api;
+## 🌍 환경 설정});
+
+
+
+**`vite.config.ts`**:export default api;
+
 ```
 
-**사용 예:**
 ```typescript
-const response = await api.post('/api/crdp/protect', {
-  data: '1234567890123',
-  policy: 'P03'
-});
-```
 
-### 3. 디자인 시스템 (`src/index.css`)
+export default defineConfig({**사용 예:**
 
-**CSS Variables:**
-```css
+  plugins: [react()],```typescript
+
+  server: {const response = await api.post('/api/crdp/protect', {
+
+    proxy: {  data: '1234567890123',
+
+      '/api': {  policy: 'P03'
+
+        target: 'http://backend:8000',});
+
+        changeOrigin: true```
+
+      }
+
+    }### 3. 디자인 시스템 (`src/index.css`)
+
+  }
+
+})**CSS Variables:**
+
+``````css
+
 /* Colors */
---color-primary: #0066cc
+
+-----color-primary: #0066cc
+
 --color-success: #00aa00
---color-danger: #ff4444
+
+## 💾 상태 관리--color-danger: #ff4444
+
 --color-warning: #ffaa00
---color-bg: #ffffff
+
+### ConfigSection 상태--color-bg: #ffffff
+
 --color-text: #333333
---color-border: #cccccc
 
-/* Spacing, Typography, etc. */
-```
+```typescript--color-border: #cccccc
 
-**컴포넌트 클래스:**
+const [config, setConfig] = useState({
+
+  ip: localStorage.getItem('config_ip') || '192.168.0.231',/* Spacing, Typography, etc. */
+
+  port: parseInt(localStorage.getItem('config_port') || '32082'),```
+
+  policy: localStorage.getItem('config_policy') || 'P03'
+
+})**컴포넌트 클래스:**
+
 - `.card`: 카드 스타일 컨테이너
-- `.btn`, `.btn-primary`, `.btn-success`, etc.: 버튼 스타일
-- `.status-box`: 상태 표시 박스
-- `.code-box`: 코드/텍스트 표시 박스
-- `.grid-2`: 2열 그리드
 
----
+// 변경 시 자동 저장- `.btn`, `.btn-primary`, `.btn-success`, etc.: 버튼 스타일
+
+useEffect(() => {- `.status-box`: 상태 표시 박스
+
+  localStorage.setItem('config_ip', config.ip)- `.code-box`: 코드/텍스트 표시 박스
+
+  localStorage.setItem('config_port', config.port.toString())- `.grid-2`: 2열 그리드
+
+  localStorage.setItem('config_policy', config.policy)
+
+}, [config])---
+
+```
 
 ## 🛠️ 개발 가이드
 
+---
+
 ### 컴포넌트 추가
 
+## 🔒 인증 (구현 준비중)
+
 ```typescript
-// 1. src/components/MyComponent.tsx 작성
-function MyComponent() {
+
+- `contexts/AuthContext.tsx` - 인증 상태 관리// 1. src/components/MyComponent.tsx 작성
+
+- `components/ProtectedRoute.tsx` - 라우트 보호function MyComponent() {
+
   return <div>...</div>;
-}
+
+---}
+
 export default MyComponent;
+
+**Last Updated**: 2025-10-21
 
 // 2. ProtectReveal.tsx에서 사용
 import MyComponent from '../components/MyComponent';

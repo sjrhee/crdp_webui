@@ -1,233 +1,464 @@
-# Backend - FastAPI CRDP Protect/Reveal API# Backend (FastAPI)
+# Backend - CRDP FastAPI 서버# Backend - FastAPI CRDP Protect/Reveal API# Backend (FastAPI)
 
 
 
-FastAPI 기반의 CRDP 데이터 암호화/복호화 REST API 서버입니다.## Features
-
-- FastAPI with automatic OpenAPI/Swagger UI
-
----- JWT auth (OAuth2 password flow)
-
-- CORS configured for Vite dev server
-
-## 🏗️ 구조- Items demo API (protected)
+FastAPI 기반 CRDP 데이터 보호/복구 API 서버
 
 
 
-```## Endpoints
+---FastAPI 기반의 CRDP 데이터 암호화/복호화 REST API 서버입니다.## Features
 
-backend/- `GET /health` – health check
 
-├── app/- `POST /api/auth/login` – form fields: username, password; returns JWT
 
-│   ├── __init__.py- `GET /api/auth/me` – requires `Authorization: Bearer <token>`
+## 🚀 빠른 시작- FastAPI with automatic OpenAPI/Swagger UI
 
-│   ├── main.py                  # FastAPI 애플리케이션 진입점- `GET /api/items` – protected demo list
 
-│   ├── core/- Swagger UI: `/docs`  | ReDoc: `/redoc`
 
-│   │   ├── __init__.py
+### 1. 설치---- JWT auth (OAuth2 password flow)
 
-│   │   ├── config.py            # 환경 설정 관리## Setup
 
-│   │   └── security.py          # 보안 관련 유틸1. Create virtualenv (optional) and install deps:
 
-│   ├── api/```
+```bash- CORS configured for Vite dev server
 
-│   │   ├── __init__.pypip3 install -r requirements.txt
+pip install -r requirements.txt
 
-│   │   └── routes/```
+```## 🏗️ 구조- Items demo API (protected)
 
-│   │       ├── __init__.py2. Create `.env` from example and adjust:
 
-│   │       └── protect_reveal.py # Protect/Reveal 엔드포인트```
 
-│   ├── models/cp .env.example .env
+### 2. 환경 설정
 
-│   │   ├── __init__.py```
 
-│   │   └── schemas.py           # Pydantic 스키마3. Run dev server:
 
-│   └── services/```
-
-│       ├── __init__.pyuvicorn app.main:app --reload --port 8000
-
-│       └── protect_reveal/```
-
-│           ├── __init__.py
-
-│           ├── client.py        # CRDP HTTP 클라이언트## Tests
-
-│           ├── runner.py        # (미사용)```
-
-│           ├── cli.py           # (미사용)pytest -q
-
-│           └── utils.py         # 유틸 함수```
-
-├── tests/
-
-│   ├── __init__.py## CRDP Protect integration
-
-│   ├── test_auth.py
-
-│   ├── test_health.pyNew endpoints:
-
-│   └── test_protect_reveal.py- `POST /api/protect` → external CRDP Protect API
-
-├── requirements.txt             # Python 의존성- `POST /api/reveal` → external CRDP Reveal API
-
-├── pytest.ini                   # pytest 설정
-
-├── Dockerfile                   # 컨테이너 이미지Optional JSON body to override (protect):
-
-└── README.md                    # 이 파일
-
-``````
-
-{
-
----	"host": "192.168.0.231",
-
-	"port": 32082,
-
-## 🚀 빠른 시작	"policy": "P03",
-
-	"data": "1234567890123"
-
-### 로컬 개발 환경}
-
-```
-
-#### 1. 의존성 설치
-
-```bashEnvironment variables (backend/.env):
-
-cd backend
-
-pip install -r requirements.txt```
-
-```CRDP_API_HOST=192.168.0.231
-
-CRDP_API_PORT=32082
-
-#### 2. 환경 변수 설정CRDP_PROTECTION_POLICY=P03
-
-```bashCRDP_SAMPLE_DATA=1234567890123
-
-# Linux/Mac```
+```bash```## Endpoints
 
 export CRDP_API_HOST=192.168.0.231
 
-export CRDP_API_PORT=32082Reveal body example:
+export CRDP_API_PORT=32082backend/- `GET /health` – health check
 
 export CRDP_PROTECTION_POLICY=P03
 
-export CORS_ORIGINS=http://localhost:5173,http://localhost:8000```
+```├── app/- `POST /api/auth/login` – form fields: username, password; returns JWT
+
+
+
+### 3. 실행│   ├── __init__.py- `GET /api/auth/me` – requires `Authorization: Bearer <token>`
+
+
+
+```bash│   ├── main.py                  # FastAPI 애플리케이션 진입점- `GET /api/items` – protected demo list
+
+# 개발 모드
+
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000│   ├── core/- Swagger UI: `/docs`  | ReDoc: `/redoc`
+
+
+
+# 프로덕션 모드│   │   ├── __init__.py
+
+gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+
+```│   │   ├── config.py            # 환경 설정 관리## Setup
+
+
+
+접속: http://localhost:8000/docs│   │   └── security.py          # 보안 관련 유틸1. Create virtualenv (optional) and install deps:
+
+
+
+---│   ├── api/```
+
+
+
+## 📋 API 엔드포인트│   │   ├── __init__.pypip3 install -r requirements.txt
+
+
+
+### 기본 정보│   │   └── routes/```
+
+
+
+모든 응답은 다음 필드를 포함합니다:│   │       ├── __init__.py2. Create `.env` from example and adjust:
+
+- `data` - 결과 데이터
+
+- `debug` - 요청/응답 상세 정보 (개발용)│   │       └── protect_reveal.py # Protect/Reveal 엔드포인트```
+
+
+
+### Protect (암호화)│   ├── models/cp .env.example .env
+
+
+
+```bash│   │   ├── __init__.py```
+
+POST /api/crdp/protect
+
+│   │   └── schemas.py           # Pydantic 스키마3. Run dev server:
 
 {
 
-# Windows	"host": "192.168.0.231",
+  "data": "1234567890123",│   └── services/```
 
-set CRDP_API_HOST=192.168.0.231	"port": 32082,
+  "policy": "P03"
 
-set CRDP_API_PORT=32082	"policy": "P03",
+}│       ├── __init__.pyuvicorn app.main:app --reload --port 8000
 
-set CRDP_PROTECTION_POLICY=P03	"protected_data": "<protected string>",
+```
 
-set CORS_ORIGINS=http://localhost:5173,http://localhost:8000	"username": "user1",            // optional
+│       └── protect_reveal/```
 
-```	"external_version": "1001002"   // optional
+### Reveal (복호화)
+
+│           ├── __init__.py
+
+```bash
+
+POST /api/crdp/reveal│           ├── client.py        # CRDP HTTP 클라이언트## Tests
+
+
+
+{│           ├── runner.py        # (미사용)```
+
+  "protected_data": "8555545382975",
+
+  "policy": "P03"│           ├── cli.py           # (미사용)pytest -q
 
 }
 
-#### 3. 서버 시작```
+```│           └── utils.py         # 유틸 함수```
+
+
+
+### Bulk Protect├── tests/
+
+
+
+```bash│   ├── __init__.py## CRDP Protect integration
+
+POST /api/crdp/protect-bulk
+
+│   ├── test_auth.py
+
+{
+
+  "data_list": ["1234567890123", "9876543210987"],│   ├── test_health.pyNew endpoints:
+
+  "policy": "P03"
+
+}│   └── test_protect_reveal.py- `POST /api/protect` → external CRDP Protect API
+
+```
+
+├── requirements.txt             # Python 의존성- `POST /api/reveal` → external CRDP Reveal API
+
+### Bulk Reveal
+
+├── pytest.ini                   # pytest 설정
 
 ```bash
+
+POST /api/crdp/reveal-bulk├── Dockerfile                   # 컨테이너 이미지Optional JSON body to override (protect):
+
+
+
+{└── README.md                    # 이 파일
+
+  "protected_data_list": ["8555545382975", "9999999999999"],
+
+  "policy": "P03"``````
+
+}
+
+```{
+
+
+
+### Health Check---	"host": "192.168.0.231",
+
+
+
+```bash	"port": 32082,
+
+GET /api/crdp/health
+
+```## 🚀 빠른 시작	"policy": "P03",
+
+
+
+응답:	"data": "1234567890123"
+
+```json
+
+{### 로컬 개발 환경}
+
+  "status": "healthy",
+
+  "crdp_config": {```
+
+    "host": "192.168.0.231",
+
+    "port": 32082,#### 1. 의존성 설치
+
+    "policy": "P03"
+
+  }```bashEnvironment variables (backend/.env):
+
+}
+
+```cd backend
+
+
+
+---pip install -r requirements.txt```
+
+
+
+## 📂 구조```CRDP_API_HOST=192.168.0.231
+
+
+
+```CRDP_API_PORT=32082
+
+backend/
+
+├── app/#### 2. 환경 변수 설정CRDP_PROTECTION_POLICY=P03
+
+│   ├── __init__.py
+
+│   ├── main.py                     # FastAPI 앱 초기화```bashCRDP_SAMPLE_DATA=1234567890123
+
+│   ├── core/
+
+│   │   ├── config.py               # 환경설정# Linux/Mac```
+
+│   │   └── security.py             # CORS 설정
+
+│   ├── api/export CRDP_API_HOST=192.168.0.231
+
+│   │   └── routes/
+
+│   │       └── protect_reveal.py    # Protect/Reveal 엔드포인트export CRDP_API_PORT=32082Reveal body example:
+
+│   ├── models/
+
+│   │   └── schemas.py              # Pydantic 모델export CRDP_PROTECTION_POLICY=P03
+
+│   └── services/
+
+│       └── protect_reveal/export CORS_ORIGINS=http://localhost:5173,http://localhost:8000```
+
+│           ├── cli.py              # CLI 클라이언트
+
+│           ├── client.py           # CRDP 클라이언트{
+
+│           ├── runner.py           # 요청 실행기
+
+│           └── utils.py            # 유틸리티# Windows	"host": "192.168.0.231",
+
+├── tests/
+
+│   ├── test_health.pyset CRDP_API_HOST=192.168.0.231	"port": 32082,
+
+│   ├── test_auth.py
+
+│   └── test_protect_reveal.pyset CRDP_API_PORT=32082	"policy": "P03",
+
+├── pytest.ini
+
+├── requirements.txtset CRDP_PROTECTION_POLICY=P03	"protected_data": "<protected string>",
+
+└── Dockerfile
+
+```set CORS_ORIGINS=http://localhost:5173,http://localhost:8000	"username": "user1",            // optional
+
+
+
+---```	"external_version": "1001002"   // optional
+
+
+
+## 🧪 테스트}
+
+
+
+```bash#### 3. 서버 시작```
+
+# 모든 테스트 실행
+
+python -m pytest -v```bash
+
 uvicorn app.main:app --reload --port 8000
-```
+
+# 특정 테스트만 실행```
+
+python -m pytest tests/test_protect_reveal.py -v
 
 #### 4. 접속
-- **API 문서**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **Health Check**: http://localhost:8000/api/crdp/health
 
----
+# 커버리지 확인- **API 문서**: http://localhost:8000/docs
 
-## 🛠️ 환경 설정
+python -m pytest --cov=app tests/- **ReDoc**: http://localhost:8000/redoc
 
-### 환경 변수 (`backend/.env`)
+```- **Health Check**: http://localhost:8000/api/crdp/health
 
-| 변수명 | 기본값 | 설명 |
-|--------|--------|------|
-| `CRDP_API_HOST` | `192.168.0.231` | CRDP 암·복호화 서버 호스트 |
-| `CRDP_API_PORT` | `32082` | CRDP 서버 포트 |
+
+
+------
+
+
+
+## 🐳 Docker 빌드## 🛠️ 환경 설정
+
+
+
+```bash### 환경 변수 (`backend/.env`)
+
+TAG=$(date +%Y%m%d-%H%M%S)
+
+docker build -t 192.168.0.231:5001/backend:$TAG -f backend/Dockerfile backend| 변수명 | 기본값 | 설명 |
+
+docker push 192.168.0.231:5001/backend:$TAG|--------|--------|------|
+
+echo "Image: 192.168.0.231:5001/backend:$TAG"| `CRDP_API_HOST` | `192.168.0.231` | CRDP 암·복호화 서버 호스트 |
+
+```| `CRDP_API_PORT` | `32082` | CRDP 서버 포트 |
+
 | `CRDP_PROTECTION_POLICY` | `P03` | 데이터 보호 정책 이름 |
-| `CORS_ORIGINS` | `http://localhost:5173` | CORS 허용 도메인 (콤마 구분) |
+
+---| `CORS_ORIGINS` | `http://localhost:5173` | CORS 허용 도메인 (콤마 구분) |
+
 | `SECRET_KEY` | (자동 생성) | JWT 시크릿 키 |
 
+## 🔑 환경 변수
+
 ### 설정 파일 (`app/core/config.py`)
-```python
-from pydantic_settings import BaseSettings
 
-class Settings(BaseSettings):
-    CRDP_API_HOST: str = "192.168.0.231"
-    CRDP_API_PORT: int = 32082
+| 변수 | 기본값 | 설명 |```python
+
+|------|--------|------|from pydantic_settings import BaseSettings
+
+| `CRDP_API_HOST` | `192.168.0.231` | CRDP 서버 호스트 |
+
+| `CRDP_API_PORT` | `32082` | CRDP 서버 포트 |class Settings(BaseSettings):
+
+| `CRDP_PROTECTION_POLICY` | `P03` | 보호 정책 |    CRDP_API_HOST: str = "192.168.0.231"
+
+| `CORS_ORIGINS` | `["*"]` | CORS 허용 도메인 |    CRDP_API_PORT: int = 32082
+
     CRDP_PROTECTION_POLICY: str = "P03"
-    CORS_ORIGINS: str = "http://localhost:5173"
+
+---    CORS_ORIGINS: str = "http://localhost:5173"
+
     
-    class Config:
+
+## 🔍 Debug Field    class Config:
+
         env_file = ".env"
-```
 
----
+모든 응답에 `debug` 필드가 포함되어 있습니다:```
 
-## 📋 API 엔드포인트
 
-### 1. Protect (암호화)
 
-**요청:**
-```bash
-POST /api/crdp/protect
-Content-Type: application/json
+```json---
 
 {
-  "data": "1234567890123",
-  "policy": "P03",
-  "host": "192.168.0.231",
-  "port": 32082
-}
-```
 
-**응답 (성공):**
-```json
-{
-  "status_code": 200,
-  "protected_data": "8555545382975",
-  "error": null,
+  "data": {...},## 📋 API 엔드포인트
+
   "debug": {
-    "url": "http://192.168.0.231:32082/v1/protect",
-    "request": { "protection_policy_name": "P03", "data": "1234567890123" },
-    "status_code": 200,
-    "response": { "data": "8555545382975" },
-    "headers": { "content-type": "application/json" }
-  }
+
+    "url": "http://192.168.0.231:32082/protect",### 1. Protect (암호화)
+
+    "request": {...},
+
+    "response": {...},**요청:**
+
+    "headers": {...},```bash
+
+    "status_code": 200POST /api/crdp/protect
+
+  }Content-Type: application/json
+
 }
+
+```{
+
+  "data": "1234567890123",
+
+프론트엔드의 "Progress Log"에서 확인할 수 있습니다.  "policy": "P03",
+
+  "host": "192.168.0.231",
+
+---  "port": 32082
+
+}
+
+## 📦 의존성```
+
+
+
+- **fastapi** - 웹 프레임워크**응답 (성공):**
+
+- **uvicorn** - ASGI 서버```json
+
+- **pydantic** - 데이터 검증{
+
+- **requests** - HTTP 클라이언트  "status_code": 200,
+
+- **pytest** - 테스트 프레임워크  "protected_data": "8555545382975",
+
+- **python-multipart** - 폼 데이터 처리  "error": null,
+
+  "debug": {
+
+---    "url": "http://192.168.0.231:32082/v1/protect",
+
+    "request": { "protection_policy_name": "P03", "data": "1234567890123" },
+
+## 🛠️ 개발 명령어    "status_code": 200,
+
+    "response": { "data": "8555545382975" },
+
+```bash    "headers": { "content-type": "application/json" }
+
+# 패키지 설치  }
+
+pip install -r requirements.txt}
+
 ```
 
-**매개변수:**
+# 개발 서버 실행
+
+uvicorn app.main:app --reload**매개변수:**
+
 - `data` (필수): 암호화할 데이터 (string)
-- `policy` (선택): 보호 정책 (기본값: 환경 변수)
-- `host` (선택): CRDP 서버 호스트 (기본값: 환경 변수)
+
+# 린트 체크 (있으면)- `policy` (선택): 보호 정책 (기본값: 환경 변수)
+
+flake8 app/- `host` (선택): CRDP 서버 호스트 (기본값: 환경 변수)
+
 - `port` (선택): CRDP 서버 포트 (기본값: 환경 변수)
 
----
+# 테스트 실행
 
-### 2. Reveal (복호화)
+pytest -v---
 
-**요청:**
+
+
+# 타입 체크 (있으면)### 2. Reveal (복호화)
+
+mypy app/
+
+```**요청:**
+
 ```bash
-POST /api/crdp/reveal
+
+---POST /api/crdp/reveal
+
 Content-Type: application/json
+
+**Last Updated**: 2025-10-21
 
 {
   "protected_data": "8555545382975",

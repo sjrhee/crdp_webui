@@ -1,210 +1,417 @@
-# CRDP Protect/Reveal WebUI# React + FastAPI Starter
+# CRDP Protect/Reveal WebUI# CRDP Protect/Reveal WebUI# React + FastAPI Starter
 
 
 
-미니멀한 FastAPI + React 기반의 **CRDP 데이터 암호화/복호화 테스트 도구**입니다.이 프로젝트는 FastAPI 백엔드와 Vite + React(Typescript) 프론트엔드로 구성되며, CORS 설정, Swagger UI 자동 문서화, 그리고 **CRDP Protect/Reveal API 통합**을 제공합니다. (미니멀 버전: 인증·아이템 라우트 제거, Protect/Reveal 전용)
+FastAPI + React 기반의 **CRDP 데이터 암호화/복호화 테스트 도구**
 
 
 
-- **Backend**: FastAPI, Python 3.11+## 구성
+- **Backend**: FastAPI (Python 3.11+)미니멀한 FastAPI + React 기반의 **CRDP 데이터 암호화/복호화 테스트 도구**입니다.이 프로젝트는 FastAPI 백엔드와 Vite + React(Typescript) 프론트엔드로 구성되며, CORS 설정, Swagger UI 자동 문서화, 그리고 **CRDP Protect/Reveal API 통합**을 제공합니다. (미니멀 버전: 인증·아이템 라우트 제거, Protect/Reveal 전용)
 
-- **Frontend**: React 19 + Vite + TypeScript- Backend: FastAPI, CORS, pydantic-settings (Protect/Reveal 전용 API)
+- **Frontend**: React 19 + Vite + TypeScript  
 
-- **Deployment**: Docker + Kubernetes (Helm)- Frontend: Vite + React + TS, React Router, Axios 인터셉터
-
-- **Features**: 단일/대량 데이터 암호화·복호화, 실시간 진행 로그, 자동 입력 연결- **CRDP Integration**: Protect/Reveal API (데이터 암호화/복호화)
+- **Deployment**: Docker + Kubernetes (Helm)
 
 
 
----## 빠른 시작
+---- **Backend**: FastAPI, Python 3.11+## 구성
+
+
+
+## 🚀 로컬 개발- **Frontend**: React 19 + Vite + TypeScript- Backend: FastAPI, CORS, pydantic-settings (Protect/Reveal 전용 API)
+
+
+
+### 1. 백엔드- **Deployment**: Docker + Kubernetes (Helm)- Frontend: Vite + React + TS, React Router, Axios 인터셉터
+
+
+
+```bash- **Features**: 단일/대량 데이터 암호화·복호화, 실시간 진행 로그, 자동 입력 연결- **CRDP Integration**: Protect/Reveal API (데이터 암호화/복호화)
+
+cd backend
+
+pip install -r requirements.txt
+
+export CRDP_API_HOST=192.168.0.231 CRDP_API_PORT=32082 CRDP_PROTECTION_POLICY=P03
+
+uvicorn app.main:app --reload --port 8000---## 빠른 시작
+
+```
 
 1) 전체 셋업 자동 실행
 
+접속: http://localhost:8000/docs (API 문서)
+
 ## 🚀 빠른 시작```
+
+### 2. 프론트엔드
 
 chmod +x setup.sh
 
-### 로컬 개발./setup.sh
+```bash
+
+cd frontend### 로컬 개발./setup.sh
+
+npm install
+
+npm run dev```
 
 ```
 
 #### 1. 저장소 클론
 
+접속: http://localhost:5173/protect-reveal
+
 ```bash2) 백엔드 실행
+
+---
 
 git clone https://github.com/sjrhee/crdp_webui.git```
 
+## 🐳 Docker 빌드 & 푸시
+
 cd crdp_webuibackend/.venv/bin/uvicorn app.main:app --reload --port 8000
+
+```bash
+
+TAG=$(date +%Y%m%d-%H%M%S)``````
+
+
+
+# Backend
+
+docker build -t 192.168.0.231:5001/backend:$TAG -f backend/Dockerfile backend
+
+docker push 192.168.0.231:5001/backend:$TAG#### 2. 백엔드 시작3) 프론트엔드 실행
+
+
+
+# Frontend```bash```
+
+docker build -t 192.168.0.231:5001/frontend:$TAG -f frontend/Dockerfile frontend
+
+docker push 192.168.0.231:5001/frontend:$TAG# 의존성 설치cd frontend
+
+
+
+echo "Backend: $TAG"cd backendnpm run dev
+
+echo "Frontend: $TAG"
+
+```pip install -r requirements.txt```
+
+
+
+---
+
+
+
+## ☸️ Kubernetes 배포 (Helm)# 환경 설정 (선택)- Swagger UI: http://localhost:8000/docs
+
+
+
+```bashexport CRDP_API_HOST=192.168.0.231- **Protect/Reveal UI**: http://localhost:5173/protect-reveal
+
+# 네임스페이스 생성
+
+kubectl create namespace crdp-webuiexport CRDP_API_PORT=32082
+
+
+
+# Helm 배포export CRDP_PROTECTION_POLICY=P03## 환경 변수
+
+helm upgrade --install crdp-webui ./helm/react-fastapi \
+
+  -n crdp-webui \- backend/.env
+
+  -f ./helm/react-fastapi/values-local-registry.yaml
+
+# 실행  - SECRET_KEY: 자동 생성됨
+
+# 상태 확인
+
+kubectl -n crdp-webui get podsuvicorn app.main:app --reload --port 8000  - CORS_ORIGINS: JSON 배열 혹은 콤마 구분 문자열 허용
+
+```
+
+```  - **CRDP_API_HOST**: CRDP 암·복호화 서버 호스트(백엔드가 통신). 웹UI 도메인과 구분 필요.
+
+**hosts 파일 설정** (클라이언트 PC):
+
+```bash  - **CRDP_API_PORT**: CRDP API 서버 포트 (기본: 32082)
+
+192.168.0.240 crdp-webui.local
+
+```#### 3. 프론트엔드 시작  - **CRDP_PROTECTION_POLICY**: 보호 정책 이름 (기본: P03)
+
+
+
+접속: http://crdp-webui.local/protect-reveal```bash- frontend/.env
+
+
+
+---cd frontend  - VITE_API_BASE_URL: 기본 http://localhost:8000
+
+
+
+## 📋 API 엔드포인트npm install
+
+
+
+### Protect (암호화)npm run dev## 스크립트
+
+```bash
+
+POST /api/crdp/protect```- 백엔드 테스트
+
+{
+
+  "data": "1234567890123",```
+
+  "policy": "P03"
+
+}접속:cd backend
+
+```
+
+- **WebUI**: http://localhost:5173/protect-reveal. .venv/bin/activate
+
+### Reveal (복호화)
+
+```bash- **API 문서**: http://localhost:8000/docspytest -q
+
+POST /api/crdp/reveal
+
+{```
+
+  "protected_data": "8555545382975",
+
+  "policy": "P03"---- 프론트엔드 빌드
+
+}
 
 ``````
 
 
 
-#### 2. 백엔드 시작3) 프론트엔드 실행
+### Bulk 작업## 📦 Docker 빌드cd frontend
 
-```bash```
+- `POST /api/crdp/protect-bulk` - 대량 암호화
 
-# 의존성 설치cd frontend
+- `POST /api/crdp/reveal-bulk` - 대량 복호화npm run build
 
-cd backendnpm run dev
-
-pip install -r requirements.txt```
-
-
-
-# 환경 설정 (선택)- Swagger UI: http://localhost:8000/docs
-
-export CRDP_API_HOST=192.168.0.231- **Protect/Reveal UI**: http://localhost:5173/protect-reveal
-
-export CRDP_API_PORT=32082
-
-export CRDP_PROTECTION_POLICY=P03## 환경 변수
-
-- backend/.env
-
-# 실행  - SECRET_KEY: 자동 생성됨
-
-uvicorn app.main:app --reload --port 8000  - CORS_ORIGINS: JSON 배열 혹은 콤마 구분 문자열 허용
-
-```  - **CRDP_API_HOST**: CRDP 암·복호화 서버 호스트(백엔드가 통신). 웹UI 도메인과 구분 필요.
-
-  - **CRDP_API_PORT**: CRDP API 서버 포트 (기본: 32082)
-
-#### 3. 프론트엔드 시작  - **CRDP_PROTECTION_POLICY**: 보호 정책 이름 (기본: P03)
-
-```bash- frontend/.env
-
-cd frontend  - VITE_API_BASE_URL: 기본 http://localhost:8000
-
-npm install
-
-npm run dev## 스크립트
-
-```- 백엔드 테스트
-
-```
-
-접속:cd backend
-
-- **WebUI**: http://localhost:5173/protect-reveal. .venv/bin/activate
-
-- **API 문서**: http://localhost:8000/docspytest -q
-
-```
-
----- 프론트엔드 빌드
-
-```
-
-## 📦 Docker 빌드cd frontend
-
-npm run build
+- `GET /api/crdp/health` - 헬스 체크
 
 ### 이미지 빌드 및 로컬 레지스트리 푸시```
 
+---
 
 
-```bash## Kubernetes 배포
-
-# 이미지 태그 생성 (예: YYYYMMDD-HHMMSS)
-
-TAG=$(date +%Y%m%d-%H%M%S)### Helm 차트
-
-프로젝트에는 Kubernetes 배포를 위한 Helm 차트가 포함되어 있습니다.
-
-# Backend 이미지 빌드
-
-docker build -t 192.168.0.231:5001/backend:$TAG -f backend/Dockerfile backend```bash
-
-docker push 192.168.0.231:5001/backend:$TAG# 로컬 레지스트리 사용 배포
-
-helm upgrade -i crdp-webui ./helm/react-fastapi \
-
-# Frontend 이미지 빌드  -n crdp-webui --create-namespace \
-
-docker build -t 192.168.0.231:5001/frontend:$TAG -f frontend/Dockerfile frontend  -f ./helm/react-fastapi/values-local-registry.yaml
-
-docker push 192.168.0.231:5001/frontend:$TAG
-
-```# 배포 상태 확인
-
-kubectl -n crdp-webui get pods
-
----helm -n crdp-webui get all crdp-webui
-
-```
 
 ## 🎯 주요 기능
 
-자세한 내용은 [helm/react-fastapi/README.md](./helm/react-fastapi/README.md)를 참조하세요.
+```bash## Kubernetes 배포
 
-### 1️⃣ 단일 데이터 암호화 (Protect)
+| 기능 | 설명 |
 
-- 13자리 숫자 입력### 접속
+|------|------|# 이미지 태그 생성 (예: YYYYMMDD-HHMMSS)
 
-- 암호화 토큰 생성- Ingress 호스트(웹UI): values에서 기본 `crdp-webui.local`
+| 🔒 Protect | 13자리 숫자 → 암호화 토큰 |
 
-- 자동으로 복호화 입력칸에 채워짐- CRDP 서버(백엔드가 통신): 예) `crdp.local` (별도 시스템)
+| 🔓 Reveal | 암호화 토큰 → 원본 데이터 |TAG=$(date +%Y%m%d-%H%M%S)### Helm 차트
+
+| 📦 Bulk Protect | 여러 데이터 한 번에 암호화 |
+
+| 📦 Bulk Reveal | 여러 토큰 한 번에 복호화 |프로젝트에는 Kubernetes 배포를 위한 Helm 차트가 포함되어 있습니다.
+
+| 🔍 Progress Log | 백엔드↔CRDP 통신 상세 로그 |
+
+# Backend 이미지 빌드
+
+---
+
+docker build -t 192.168.0.231:5001/backend:$TAG -f backend/Dockerfile backend```bash
+
+## 🛠️ 개발
+
+docker push 192.168.0.231:5001/backend:$TAG# 로컬 레지스트리 사용 배포
+
+### 테스트
+
+helm upgrade -i crdp-webui ./helm/react-fastapi \
+
+```bash
+
+# Backend# Frontend 이미지 빌드  -n crdp-webui --create-namespace \
+
+cd backend && python -m pytest -v
+
+docker build -t 192.168.0.231:5001/frontend:$TAG -f frontend/Dockerfile frontend  -f ./helm/react-fastapi/values-local-registry.yaml
+
+# Frontend
+
+cd frontend && npm run lintdocker push 192.168.0.231:5001/frontend:$TAG
+
+```
+
+```# 배포 상태 확인
+
+### 빌드
+
+kubectl -n crdp-webui get pods
+
+```bash
+
+# Frontend---helm -n crdp-webui get all crdp-webui
+
+cd frontend && npm run build
+
+``````
 
 
 
-### 2️⃣ 단일 데이터 복호화 (Reveal)Windows 등 클라이언트 PC에서 hosts를 사용하는 경우:
+---## 🎯 주요 기능
 
-- 보호된 토큰 입력```
 
-- 원본 데이터 복구192.168.0.240 crdp-webui.local
 
-- 진행 로그에 백엔드↔CRDP 통신 정보 표시```
+## 📁 디렉토리 구조자세한 내용은 [helm/react-fastapi/README.md](./helm/react-fastapi/README.md)를 참조하세요.
 
-브라우저: http://crdp-webui.local/protect-reveal
 
-### 3️⃣ 대량 데이터 암호화 (Bulk Protect)
+
+```### 1️⃣ 단일 데이터 암호화 (Protect)
+
+backend/          # FastAPI 서버
+
+├── app/- 13자리 숫자 입력### 접속
+
+│   ├── main.py
+
+│   ├── api/routes/protect_reveal.py- 암호화 토큰 생성- Ingress 호스트(웹UI): values에서 기본 `crdp-webui.local`
+
+│   ├── services/protect_reveal/
+
+│   └── core/config.py- 자동으로 복호화 입력칸에 채워짐- CRDP 서버(백엔드가 통신): 예) `crdp.local` (별도 시스템)
+
+└── Dockerfile
+
+
+
+frontend/         # React 앱
+
+├── src/### 2️⃣ 단일 데이터 복호화 (Reveal)Windows 등 클라이언트 PC에서 hosts를 사용하는 경우:
+
+│   ├── pages/ProtectReveal.tsx
+
+│   ├── lib/api.ts- 보호된 토큰 입력```
+
+│   └── index.css
+
+└── Dockerfile- 원본 데이터 복구192.168.0.240 crdp-webui.local
+
+
+
+helm/             # Kubernetes 배포- 진행 로그에 백엔드↔CRDP 통신 정보 표시```
+
+└── react-fastapi/
+
+    ├── values.yaml브라우저: http://crdp-webui.local/protect-reveal
+
+    ├── values-local-registry.yaml
+
+    └── templates/### 3️⃣ 대량 데이터 암호화 (Bulk Protect)
+
+```
 
 - 여러 줄의 데이터 입력 (한 줄에 하나씩)### 트러블슈팅
 
+---
+
 - 배열 형태로 한 번에 암호화클러스터 운영 중 발생한 문제와 해결 방법은 [docs/troubleshooting](./docs/troubleshooting/)를 참조하세요.
+
+## 🔧 환경 변수
 
 - 결과가 자동으로 대량 복호화 입력칸으로 연결됨
 
-## 다음 단계 제안
+| 변수 | 기본값 | 설명 |
 
-### 4️⃣ 대량 데이터 복호화 (Bulk Reveal)- 프론트엔드 UI 개선 및 상태 관리 도입(Zustand/Recoil 등)
+|------|--------|------|## 다음 단계 제안
 
-- 여러 줄의 보호된 토큰 입력- 백엔드 사용자 관리/DB 연동(SQLModel/SQLAlchemy) 추가
+| CRDP_API_HOST | 192.168.0.231 | CRDP 서버 호스트 |
 
-- 배열 형태로 한 번에 복호화- Ingress 설정 및 도메인 연결(웹UI 도메인과 CRDP 도메인 혼동 방지)
+| CRDP_API_PORT | 32082 | CRDP 서버 포트 |### 4️⃣ 대량 데이터 복호화 (Bulk Reveal)- 프론트엔드 UI 개선 및 상태 관리 도입(Zustand/Recoil 등)
 
-- 모든 결과를 진행 로그에 기록- CI/CD 파이프라인 구축
+| CRDP_PROTECTION_POLICY | P03 | 보호 정책 |
 
-- **CRDP Protect/Reveal 기능 확장** (배치 처리, 통계, 감사 로그 등)
+| CORS_ORIGINS | * | CORS 허용 도메인 |- 여러 줄의 보호된 토큰 입력- 백엔드 사용자 관리/DB 연동(SQLModel/SQLAlchemy) 추가
+
+
+
+---- 배열 형태로 한 번에 복호화- Ingress 설정 및 도메인 연결(웹UI 도메인과 CRDP 도메인 혼동 방지)
+
+
+
+## 🚨 문제 해결- 모든 결과를 진행 로그에 기록- CI/CD 파이프라인 구축
+
+
+
+### ImagePullBackOff- **CRDP Protect/Reveal 기능 확장** (배치 처리, 통계, 감사 로그 등)
+
+containerd가 HTTP 레지스트리를 신뢰하지 않을 때:
 
 ### 🔍 진행 로그 (Progress Log)
 
-각 요청의 백엔드↔CRDP 통신 상세 정보:## CRDP Protect/Reveal 기능
+```bash
 
-```json
+sudo mkdir -p /etc/containerd/certs.d/192.168.0.231:5001각 요청의 백엔드↔CRDP 통신 상세 정보:## CRDP Protect/Reveal 기능
 
-{### API 엔드포인트
+sudo tee /etc/containerd/certs.d/192.168.0.231:5001/hosts.toml > /dev/null << EOF
+
+server = "http://192.168.0.231:5001"```json
+
+EOF
+
+sudo systemctl restart containerd{### API 엔드포인트
+
+```
 
   "stage": "protect_bulk",- `POST /api/crdp/protect` - 단일 데이터 암호화
 
-  "debug": {- `POST /api/crdp/reveal` - 단일 토큰 복호화
+### Ingress 접근 불가
 
-    "url": "http://192.168.0.231:32082/v1/protect",- `POST /api/crdp/protect-bulk` - 대량 데이터 암호화
+클라이언트 hosts 파일에 다음 추가:  "debug": {- `POST /api/crdp/reveal` - 단일 토큰 복호화
+
+```
+
+192.168.0.240 crdp-webui.local    "url": "http://192.168.0.231:32082/v1/protect",- `POST /api/crdp/protect-bulk` - 대량 데이터 암호화
+
+```
 
     "request": { "protection_policy_name": "P03", "data_array": [...] },- `POST /api/crdp/reveal-bulk` - 대량 토큰 복호화
 
+---
+
     "status_code": 200,- `GET /api/crdp/health` - CRDP 서비스 상태 확인
+
+## 📚 참고
 
     "response": { ... },
 
-    "headers": { ... }### 사용 예시
+- [FastAPI 문서](https://fastapi.tiangolo.com)
 
-  }
+- [React 문서](https://react.dev)    "headers": { ... }### 사용 예시
 
-}#### 단일 Protect
+- [Kubernetes 문서](https://kubernetes.io)
 
-``````bash
+- [Helm 문서](https://helm.sh)  }
+
+
+
+---}#### 단일 Protect
+
+
+
+**Last Updated**: 2025-10-21``````bash
+
 
 curl -X POST http://localhost:8000/api/crdp/protect \
 
