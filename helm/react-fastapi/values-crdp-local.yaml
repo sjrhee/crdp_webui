@@ -1,3 +1,12 @@
+images:
+  registry: ""
+  backend:
+    repository: backend
+    tag: local
+  frontend:
+    repository: frontend
+    tag: local
+
 ingress:
   enabled: true
   hosts:

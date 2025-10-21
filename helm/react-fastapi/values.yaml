@@ -1,6 +1,17 @@
 images:
-  backend: "backend:latest"
-  frontend: "frontend:latest"
+  # 선택: 공통 레지스트리 프리픽스 (예: ghcr.io/OWNER 또는 registry.example.com/NAMESPACE)
+  registry: ""
+  backend:
+    repository: "backend"
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  frontend:
+    repository: "frontend"
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+# 선택: private 레지스트리 사용 시 imagePullSecret 이름들
+imagePullSecrets: []
 
 backend:
   replicas: 1
