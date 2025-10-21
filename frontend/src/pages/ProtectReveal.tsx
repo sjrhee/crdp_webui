@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import api from '../lib/api';
+import type { AxiosError } from 'axios';
 
 interface ProtectResponse {
   status_code: number;
@@ -13,30 +14,75 @@ interface RevealResponse {
   error?: string;
 }
 
+interface BulkProtectResponse {
+  status_code: number;
+  protected_data_array?: string[];
+  error?: string;
+}
+
+interface BulkRevealResponse {
+  status_code: number;
+  data_array?: string[];
+  error?: string;
+}
+
+type ProgressEntry =
+  | {
+      stage: 'protect';
+      request: { protection_policy_name: string; data: string };
+      response: ProtectResponse;
+    }
+  | {
+      stage: 'reveal';
+      request: { protection_policy_name: string; protected_data: string };
+      response: RevealResponse;
+    }
+  | {
+      stage: 'protect_bulk';
+      request: { protection_policy_name: string; data_array: string[] };
+      response: BulkProtectResponse;
+    }
+  | {
+      stage: 'reveal_bulk';
+      request: { protection_policy_name: string; protected_data_array: string[] };
+      response: BulkRevealResponse;
+    };
+
 export function ProtectReveal() {
   const [protectInput, setProtectInput] = useState('1234567890123');
-  const [host, setHost] = useState('192.168.0.241');
-  const [port, setPort] = useState('80');
+  const [host, setHost] = useState('192.168.0.231');
+  const [port, setPort] = useState('32082');
   const [policy, setPolicy] = useState('P03');
   const [protectResult, setProtectResult] = useState<ProtectResponse | null>(null);
   const [protectLoading, setProtectLoading] = useState(false);
 
   const [revealInput, setRevealInput] = useState('');
-  const [revealUsername, setRevealUsername] = useState('');
   const [revealResult, setRevealResult] = useState<RevealResponse | null>(null);
   const [revealLoading, setRevealLoading] = useState(false);
 
-  const [bulkProtectInput, setBulkProtectInput] = useState('001\n002\n003');
-  const [bulkProtectResult, setBulkProtectResult] = useState<any>(null);
+  const [bulkProtectInput, setBulkProtectInput] = useState('1234567890123\n1234567890124\n1234567890125');
+  const [bulkProtectResult, setBulkProtectResult] = useState<BulkProtectResponse | null>(null);
   const [bulkProtectLoading, setBulkProtectLoading] = useState(false);
-  const [progressLog, setProgressLog] = useState<any[]>([]);
+  const [progressLog, setProgressLog] = useState<ProgressEntry[]>([]);
+  const [bulkRevealInput, setBulkRevealInput] = useState('');
+  const [bulkRevealResult, setBulkRevealResult] = useState<BulkRevealResponse | null>(null);
+  const [bulkRevealLoading, setBulkRevealLoading] = useState(false);
+
+  const parseError = (e: unknown): { status: number; message: string } => {
+    if (typeof e === 'object' && e !== null) {
+      const err = e as AxiosError<{ detail?: string }>;
+      const status = err.response?.status ?? 500;
+      const message = err.response?.data?.detail ?? err.message ?? 'Unknown error';
+      return { status, message };
+    }
+    return { status: 500, message: String(e) };
+  };
 
   const handleProtect = async () => {
     setProtectLoading(true);
     setProtectResult(null);
     setProgressLog([]);
     try {
-      // Validate 13-digit numeric input
       if (!/^[0-9]{13}$/.test(protectInput)) {
         throw new Error('입력은 정확히 13자리 숫자여야 합니다.');
       }
@@ -45,21 +91,19 @@ export function ProtectReveal() {
         data: protectInput,
         policy,
         host,
-        port: parseInt(port),
+        port: parseInt(port, 10),
       });
-      // push progress
-      setProgressLog((p) => [...p, { stage: 'protect', request: { protection_policy_name: policy, data: protectInput }, response: response.data }]);
+      setProgressLog((p) => [
+        ...p,
+        { stage: 'protect', request: { protection_policy_name: policy, data: protectInput }, response: response.data },
+      ]);
       setProtectResult(response.data);
-      
-      // Auto-fill reveal input with protected token
       if (response.data.protected_data) {
         setRevealInput(response.data.protected_data);
       }
-    } catch (error: any) {
-      setProtectResult({
-        status_code: error.response?.status || 500,
-        error: error.response?.data?.detail || error.message,
-      });
+    } catch (error: unknown) {
+      const info = parseError(error);
+      setProtectResult({ status_code: info.status, error: info.message });
     } finally {
       setProtectLoading(false);
     }
@@ -68,22 +112,21 @@ export function ProtectReveal() {
   const handleReveal = async () => {
     setRevealLoading(true);
     setRevealResult(null);
-    // keep progress log
     try {
       const response = await api.post('/api/crdp/reveal', {
         protected_data: revealInput,
-        username: revealUsername || undefined,
         policy,
         host,
-        port: parseInt(port),
+        port: parseInt(port, 10),
       });
-      setProgressLog((p) => [...p, { stage: 'reveal', request: { protection_policy_name: policy, protected_data: revealInput }, response: response.data }]);
+      setProgressLog((p) => [
+        ...p,
+        { stage: 'reveal', request: { protection_policy_name: policy, protected_data: revealInput }, response: response.data },
+      ]);
       setRevealResult(response.data);
-    } catch (error: any) {
-      setRevealResult({
-        status_code: error.response?.status || 500,
-        error: error.response?.data?.detail || error.message,
-      });
+    } catch (error: unknown) {
+      const info = parseError(error);
+      setRevealResult({ status_code: info.status, error: info.message });
     } finally {
       setRevealLoading(false);
     }
@@ -96,330 +139,332 @@ export function ProtectReveal() {
     try {
       const dataArray = bulkProtectInput
         .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
       const response = await api.post('/api/crdp/protect-bulk', {
         data_array: dataArray,
         policy,
         host,
-        port: parseInt(port),
+        port: parseInt(port, 10),
       });
-      setProgressLog((p) => [...p, { stage: 'protect_bulk', request: { protection_policy_name: policy, data_array: dataArray }, response: response.data }]);
+      setProgressLog((p) => [
+        ...p,
+        { stage: 'protect_bulk', request: { protection_policy_name: policy, data_array: dataArray }, response: response.data },
+      ]);
       setBulkProtectResult(response.data);
-    } catch (error: any) {
-      setBulkProtectResult({
-        status_code: error.response?.status || 500,
-        error: error.response?.data?.detail || error.message,
-      });
+    } catch (error: unknown) {
+      const info = parseError(error);
+      setBulkProtectResult({ status_code: info.status, error: info.message });
     } finally {
       setBulkProtectLoading(false);
     }
   };
 
+  const handleBulkReveal = async () => {
+    setBulkRevealLoading(true);
+    setBulkRevealResult(null);
+    setProgressLog([]);
+    try {
+      const protectedArray = bulkRevealInput
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+      const response = await api.post('/api/crdp/reveal-bulk', {
+        protected_data_array: protectedArray,
+        policy,
+        host,
+        port: parseInt(port, 10),
+      });
+      setProgressLog((p) => [
+        ...p,
+        {
+          stage: 'reveal_bulk',
+          request: { protection_policy_name: policy, protected_data_array: protectedArray },
+          response: response.data,
+        },
+      ]);
+      setBulkRevealResult(response.data);
+    } catch (error: unknown) {
+      const info = parseError(error);
+      setBulkRevealResult({ status_code: info.status, error: info.message });
+    } finally {
+      setBulkRevealLoading(false);
+    }
+  };
+
   return (
-    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1 style={{ margin: '0 0 1rem 0' }}>CRDP Protect/Reveal</h1>
-      <p style={{ color: '#666', marginTop: 0 }}>데이터 암호화/복호화 테스트 도구 (인증 없음)</p>
+    <>
+      <header className="app-header">
+        <div className="app-header-inner">
+          <span className="brand-dot" />
+          <div className="brand-title">CRDP Protect/Reveal</div>
+          <div className="spacer" />
+          <span className="tag">미니멀 테스트 도구</span>
+        </div>
+      </header>
+      <main className="container">
+        <h1 className="page-title">Protect / Reveal</h1>
+        <p className="page-desc">데이터 암호화/복호화를 빠르게 검증하는 간단한 도구입니다.</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
-        {/* Config inputs (host/port/policy) */}
-        <div style={{ gridColumn: '1 / span 2', border: '1px solid #ddd', padding: '1rem', borderRadius: '8px' }}>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <label style={{ color: '#666' }}>CRDP IP</label>
-            <input value={host} onChange={(e) => setHost(e.target.value)} style={{ width: '180px', padding: '0.4rem' }} />
-            <label style={{ color: '#666' }}>CRDP Port</label>
-            <input value={port} onChange={(e) => setPort(e.target.value)} style={{ width: '120px', padding: '0.4rem' }} />
-            <label style={{ color: '#666' }}>Policy</label>
-            <input value={policy} onChange={(e) => setPolicy(e.target.value)} style={{ width: '120px', padding: '0.4rem' }} />
-            <div style={{ marginLeft: 'auto' }}>
-              <button
-                onClick={() => { setProtectInput('1234567890123'); setRevealInput(''); setBulkProtectInput('001\n002\n003'); setProtectResult(null); setRevealResult(null); setBulkProtectResult(null); setProgressLog([]); }}
-                className="secondary"
-                style={{ padding: '0.5rem 0.75rem', backgroundColor: '#334155', color: 'white', borderRadius: '6px', border: 'none' }}
-              >
-                리셋
+        <div className="grid-2">
+          <div className="card grid-span-2">
+            <div className="card-body">
+              <div className="form-row">
+                <div className="form-group" style={{ minWidth: 160 }}>
+                  <label>CRDP IP</label>
+                  <input value={host} onChange={(e) => setHost(e.target.value)} placeholder="예: 192.168.0.231" />
+                </div>
+                <div className="form-group" style={{ minWidth: 120 }}>
+                  <label>CRDP Port</label>
+                  <input value={port} onChange={(e) => setPort(e.target.value)} placeholder="예: 32082" />
+                </div>
+                <div className="form-group" style={{ minWidth: 120 }}>
+                  <label>Policy</label>
+                  <input value={policy} onChange={(e) => setPolicy(e.target.value)} placeholder="예: P03" />
+                </div>
+                <div className="spacer" />
+                <div className="actions">
+                  <button
+                    onClick={() => {
+                      setProtectInput('1234567890123');
+                      setRevealInput('');
+                      setBulkProtectInput('1234567890123\n1234567890124\n1234567890125');
+                      setProtectResult(null);
+                      setRevealResult(null);
+                      setBulkProtectResult(null);
+                      setBulkRevealResult(null);
+                      setBulkRevealInput('');
+                      setProgressLog([]);
+                    }}
+                    className="btn btn-secondary"
+                  >
+                    리셋
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-body">
+              <h2>🔒 Protect (암호화)</h2>
+              <div className="form-group" style={{ marginBottom: 12 }}>
+                <label>원본 데이터</label>
+                <input
+                  type="text"
+                  value={protectInput}
+                  onChange={(e) => setProtectInput(e.target.value)}
+                  placeholder="암호화할 데이터 입력"
+                />
+              </div>
+              <button onClick={handleProtect} disabled={protectLoading || !protectInput} className="btn btn-primary">
+                {protectLoading ? '처리 중...' : 'Protect 실행'}
               </button>
-            </div>
-          </div>
-        </div>
-        {/* Protect Section */}
-        <div style={{ border: '1px solid #ddd', padding: '1.5rem', borderRadius: '8px' }}>
-          <h2>🔒 Protect (암호화)</h2>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              원본 데이터:
-            </label>
-            <input
-              type="text"
-              value={protectInput}
-              onChange={(e) => setProtectInput(e.target.value)}
-              placeholder="암호화할 데이터 입력"
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '1rem',
-              }}
-            />
-          </div>
-          <button
-            onClick={handleProtect}
-            disabled={protectLoading || !protectInput}
-            style={{
-              padding: '0.75rem 1.5rem',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: protectLoading || !protectInput ? 'not-allowed' : 'pointer',
-              fontSize: '1rem',
-              opacity: protectLoading || !protectInput ? 0.6 : 1,
-            }}
-          >
-            {protectLoading ? '처리 중...' : 'Protect 실행'}
-          </button>
 
-          {protectResult && (
-            <div
-              style={{
-                marginTop: '1rem',
-                padding: '1rem',
-                backgroundColor: protectResult.error ? '#fee' : '#efe',
-                borderRadius: '4px',
-              }}
-            >
-              <div style={{ marginBottom: '0.5rem' }}>
-                <strong>Status:</strong> {protectResult.status_code}
-              </div>
-              {protectResult.protected_data && (
-                <div style={{ wordBreak: 'break-all' }}>
-                  <strong>Protected Token:</strong>
-                  <div
-                    style={{
-                      marginTop: '0.5rem',
-                      padding: '0.5rem',
-                      backgroundColor: 'white',
-                      borderRadius: '4px',
-                      fontFamily: 'monospace',
-                      fontSize: '0.9rem',
-                    }}
-                  >
-                    {protectResult.protected_data}
+              {protectResult && (
+                <div className={`status-box ${protectResult.error ? 'status-err' : 'status-ok'}`}>
+                  <div className="row" style={{ marginBottom: 6 }}>
+                    <span className="tag">Status</span>
+                    <div>{protectResult.status_code}</div>
                   </div>
-                </div>
-              )}
-              {protectResult.error && (
-                <div style={{ color: 'red' }}>
-                  <strong>Error:</strong> {protectResult.error}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Reveal Section */}
-        <div style={{ border: '1px solid #ddd', padding: '1.5rem', borderRadius: '8px' }}>
-          <h2>🔓 Reveal (복호화)</h2>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              Protected Token:
-            </label>
-            <input
-              type="text"
-              value={revealInput}
-              onChange={(e) => setRevealInput(e.target.value)}
-              placeholder="복호화할 토큰 입력"
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '1rem',
-                fontFamily: 'monospace',
-              }}
-            />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              Username (선택):
-            </label>
-            <input
-              type="text"
-              value={revealUsername}
-              onChange={(e) => setRevealUsername(e.target.value)}
-              placeholder="감사 추적용 사용자명"
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '1rem',
-              }}
-            />
-          </div>
-          <button
-            onClick={handleReveal}
-            disabled={revealLoading || !revealInput}
-            style={{
-              padding: '0.75rem 1.5rem',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: revealLoading || !revealInput ? 'not-allowed' : 'pointer',
-              fontSize: '1rem',
-              opacity: revealLoading || !revealInput ? 0.6 : 1,
-            }}
-          >
-            {revealLoading ? '처리 중...' : 'Reveal 실행'}
-          </button>
-
-          {revealResult && (
-            <div
-              style={{
-                marginTop: '1rem',
-                padding: '1rem',
-                backgroundColor: revealResult.error ? '#fee' : '#efe',
-                borderRadius: '4px',
-              }}
-            >
-              <div style={{ marginBottom: '0.5rem' }}>
-                <strong>Status:</strong> {revealResult.status_code}
-              </div>
-              {revealResult.data && (
-                <div>
-                  <strong>Revealed Data:</strong>
-                  <div
-                    style={{
-                      marginTop: '0.5rem',
-                      padding: '0.5rem',
-                      backgroundColor: 'white',
-                      borderRadius: '4px',
-                      fontFamily: 'monospace',
-                      fontSize: '0.9rem',
-                    }}
-                  >
-                    {revealResult.data}
-                  </div>
-                </div>
-              )}
-              {revealResult.error && (
-                <div style={{ color: 'red' }}>
-                  <strong>Error:</strong> {revealResult.error}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Bulk Protect Section */}
-      <div style={{ border: '1px solid #ddd', padding: '1.5rem', borderRadius: '8px' }}>
-        <h2>📦 Bulk Protect (대량 암호화)</h2>
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-            데이터 배열 (한 줄에 하나씩):
-          </label>
-          <textarea
-            value={bulkProtectInput}
-            onChange={(e) => setBulkProtectInput(e.target.value)}
-            placeholder="암호화할 데이터를 한 줄씩 입력"
-            rows={5}
-            style={{
-              width: '100%',
-              padding: '0.5rem',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              fontFamily: 'monospace',
-            }}
-          />
-        </div>
-        <button
-          onClick={handleBulkProtect}
-          disabled={bulkProtectLoading || !bulkProtectInput.trim()}
-          style={{
-            padding: '0.75rem 1.5rem',
-            backgroundColor: '#6f42c1',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: bulkProtectLoading || !bulkProtectInput.trim() ? 'not-allowed' : 'pointer',
-            fontSize: '1rem',
-            opacity: bulkProtectLoading || !bulkProtectInput.trim() ? 0.6 : 1,
-          }}
-        >
-          {bulkProtectLoading ? '처리 중...' : 'Bulk Protect 실행'}
-        </button>
-
-        {bulkProtectResult && (
-          <div
-            style={{
-              marginTop: '1rem',
-              padding: '1rem',
-              backgroundColor: bulkProtectResult.error ? '#fee' : '#efe',
-              borderRadius: '4px',
-            }}
-          >
-            <div style={{ marginBottom: '0.5rem' }}>
-              <strong>Status:</strong> {bulkProtectResult.status_code}
-            </div>
-            {bulkProtectResult.protected_data_array && (
-              <div>
-                <strong>Protected Tokens ({bulkProtectResult.protected_data_array.length}):</strong>
-                <div
-                  style={{
-                    marginTop: '0.5rem',
-                    padding: '0.5rem',
-                    backgroundColor: 'white',
-                    borderRadius: '4px',
-                    fontFamily: 'monospace',
-                    fontSize: '0.9rem',
-                    maxHeight: '200px',
-                    overflow: 'auto',
-                  }}
-                >
-                  {bulkProtectResult.protected_data_array.map((token: string, idx: number) => (
-                    <div key={idx} style={{ padding: '0.25rem 0' }}>
-                      {idx + 1}. {token}
+                  {protectResult.protected_data && (
+                    <div>
+                      <div className="row" style={{ marginBottom: 6 }}>
+                        <span className="tag">Protected Token</span>
+                        <div className="spacer" />
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() => navigator.clipboard.writeText(protectResult.protected_data || '')}
+                        >
+                          복사
+                        </button>
+                      </div>
+                      <div className="code-box">{protectResult.protected_data}</div>
                     </div>
-                  ))}
+                  )}
+                  {protectResult.error && (
+                    <div className="row" style={{ color: '#fca5a5' }}>
+                      <span className="tag">Error</span>
+                      <div>{protectResult.error}</div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-            {bulkProtectResult.error && (
-              <div style={{ color: 'red' }}>
-                <strong>Error:</strong> {bulkProtectResult.error}
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* Progress JSON and Results */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '2rem' }}>
-        <div style={{ border: '1px solid #ddd', padding: '1rem', borderRadius: '8px' }}>
-          <h3>진행 JSON</h3>
-          <pre style={{ background: '#0b1220', color: '#d1fae5', minHeight: '160px', maxHeight: '420px', overflow: 'auto', padding: '12px', borderRadius: '8px', border: '1px solid #1f2937' }}>
+          <div className="card">
+            <div className="card-body">
+              <h2>🔓 Reveal (복호화)</h2>
+              <div className="form-group" style={{ marginBottom: 12 }}>
+                <label>Protected Token</label>
+                <input
+                  type="text"
+                  value={revealInput}
+                  onChange={(e) => setRevealInput(e.target.value)}
+                  placeholder="복호화할 토큰 입력"
+                  style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace' }}
+                />
+              </div>
+              <button onClick={handleReveal} disabled={revealLoading || !revealInput} className="btn btn-success">
+                {revealLoading ? '처리 중...' : 'Reveal 실행'}
+              </button>
+
+              {revealResult && (
+                <div className={`status-box ${revealResult.error ? 'status-err' : 'status-ok'}`}>
+                  <div className="row" style={{ marginBottom: 6 }}>
+                    <span className="tag">Status</span>
+                    <div>{revealResult.status_code}</div>
+                  </div>
+                  {revealResult.data && (
+                    <div>
+                      <div className="row" style={{ marginBottom: 6 }}>
+                        <span className="tag">Revealed Data</span>
+                        <div className="spacer" />
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() => navigator.clipboard.writeText(revealResult.data || '')}
+                        >
+                          복사
+                        </button>
+                      </div>
+                      <div className="code-box">{revealResult.data}</div>
+                    </div>
+                  )}
+                  {revealResult.error && (
+                    <div className="row" style={{ color: '#fca5a5' }}>
+                      <span className="tag">Error</span>
+                      <div>{revealResult.error}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid-2" style={{ marginTop: 24 }}>
+          <div className="card">
+            <div className="card-body">
+              <h2>📦 Bulk Protect (대량 암호화)</h2>
+              <div className="form-group" style={{ marginBottom: 12 }}>
+                <label>데이터 배열 (한 줄에 하나씩)</label>
+                <textarea
+                  value={bulkProtectInput}
+                  onChange={(e) => setBulkProtectInput(e.target.value)}
+                  placeholder="암호화할 데이터를 한 줄씩 입력"
+                  rows={5}
+                  style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace' }}
+                />
+              </div>
+              <button onClick={handleBulkProtect} disabled={bulkProtectLoading || !bulkProtectInput.trim()} className="btn btn-purple">
+                {bulkProtectLoading ? '처리 중...' : 'Bulk Protect 실행'}
+              </button>
+
+              {bulkProtectResult && (
+                <div className={`status-box ${bulkProtectResult.error ? 'status-err' : 'status-ok'}`}>
+                  <div className="row" style={{ marginBottom: 6 }}>
+                    <span className="tag">Status</span>
+                    <div>{bulkProtectResult.status_code}</div>
+                  </div>
+                  {bulkProtectResult.protected_data_array && (
+                    <div>
+                      <div className="row" style={{ marginBottom: 6 }}>
+                        <span className="tag">Protected Tokens</span>
+                        <div className="spacer" />
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() =>
+                            setBulkRevealInput((bulkProtectResult.protected_data_array || []).join('\n'))
+                          }
+                          title="결과 토큰들을 Bulk Reveal 입력칸으로 보냅니다"
+                        >
+                          → Bulk Reveal로
+                        </button>
+                        <div style={{ width: 8 }} />
+                        <span className="muted">{bulkProtectResult.protected_data_array.length}개</span>
+                      </div>
+                      <div className="code-box" style={{ maxHeight: 220, overflow: 'auto' }}>
+                        {bulkProtectResult.protected_data_array.map((token: string, idx: number) => (
+                          <div key={idx} style={{ padding: '4px 0' }}>
+                            {idx + 1}. {token}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {bulkProtectResult.error && (
+                    <div className="row" style={{ color: '#fca5a5' }}>
+                      <span className="tag">Error</span>
+                      <div>{bulkProtectResult.error}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-body">
+              <h2>📦 Bulk Reveal (대량 복호화)</h2>
+              <div className="form-group" style={{ marginBottom: 12 }}>
+                <label>Protected Token 배열 (한 줄에 하나씩)</label>
+                <textarea
+                  value={bulkRevealInput}
+                  onChange={(e) => setBulkRevealInput(e.target.value)}
+                  placeholder="복호화할 토큰을 한 줄씩 입력"
+                  rows={5}
+                  style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace' }}
+                />
+              </div>
+              <button onClick={handleBulkReveal} disabled={bulkRevealLoading || !bulkRevealInput.trim()} className="btn btn-success">
+                {bulkRevealLoading ? '처리 중...' : 'Bulk Reveal 실행'}
+              </button>
+
+              {bulkRevealResult && (
+                <div className={`status-box ${bulkRevealResult.error ? 'status-err' : 'status-ok'}`}>
+                  <div className="row" style={{ marginBottom: 6 }}>
+                    <span className="tag">Status</span>
+                    <div>{bulkRevealResult.status_code}</div>
+                  </div>
+                  {bulkRevealResult.data_array && (
+                    <div>
+                      <div className="row" style={{ marginBottom: 6 }}>
+                        <span className="tag">Revealed Data</span>
+                        <div className="spacer" />
+                        <span className="muted">{bulkRevealResult.data_array.length}개</span>
+                      </div>
+                      <div className="code-box" style={{ maxHeight: 220, overflow: 'auto' }}>
+                        {bulkRevealResult.data_array.map((val: string, idx: number) => (
+                          <div key={idx} style={{ padding: '4px 0' }}>
+                            {idx + 1}. {val}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {bulkRevealResult.error && (
+                    <div className="row" style={{ color: '#fca5a5' }}>
+                      <span className="tag">Error</span>
+                      <div>{bulkRevealResult.error}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 24 }}>
+          <h3>진행 로그 (Progress)</h3>
+          <pre
+            className="code-box"
+            style={{ overflow: 'auto', maxHeight: 260, textAlign: 'left' }}
+          >
             {JSON.stringify(progressLog, null, 2)}
           </pre>
         </div>
-
-        <div style={{ border: '1px solid #ddd', padding: '1rem', borderRadius: '8px' }}>
-          <h3>결과</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span style={{ color: '#666' }}>암호문(Protected):</span>
-              <code style={{ marginLeft: 'auto', fontFamily: 'monospace' }}>{protectResult?.protected_data ?? '-'}</code>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span style={{ color: '#666' }}>복호문(Revealed):</span>
-              <code style={{ marginLeft: 'auto', fontFamily: 'monospace' }}>{revealResult?.data ?? '-'}</code>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      </main>
+    </>
   );
 }

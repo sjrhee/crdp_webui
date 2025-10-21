@@ -2,11 +2,11 @@ images:
   registry: "192.168.0.231:5001"
   backend:
     repository: backend
-    tag: 20251021-082417
+    tag: 20251021-130500
     pullPolicy: IfNotPresent
   frontend:
     repository: frontend
-    tag: 20251021-082521
+    tag: 20251021-131900
     pullPolicy: IfNotPresent
 
 ingress:
