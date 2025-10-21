@@ -6,7 +6,7 @@ images:
     pullPolicy: IfNotPresent
   frontend:
     repository: frontend
-    tag: 20251021-131900
+    tag: 20251021-140929
     pullPolicy: IfNotPresent
 
 ingress:
