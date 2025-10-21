@@ -12,6 +12,8 @@ class ProtectRequest(BaseModel):
     """Single item protect request."""
     data: str = Field(..., description="Data to protect")
     policy: Optional[str] = Field(None, description="Protection policy name (overrides default)")
+    host: Optional[str] = Field(None, description="CRDP server host (overrides default)")
+    port: Optional[int] = Field(None, description="CRDP server port (overrides default)")
 
 
 class RevealRequest(BaseModel):
@@ -19,12 +21,16 @@ class RevealRequest(BaseModel):
     protected_data: str = Field(..., description="Protected token to reveal")
     policy: Optional[str] = Field(None, description="Protection policy name (overrides default)")
     username: Optional[str] = Field(None, description="Username for audit trail")
+    host: Optional[str] = Field(None, description="CRDP server host (overrides default)")
+    port: Optional[int] = Field(None, description="CRDP server port (overrides default)")
 
 
 class ProtectBulkRequest(BaseModel):
     """Bulk protect request."""
     data_array: List[str] = Field(..., description="Array of data to protect")
     policy: Optional[str] = Field(None, description="Protection policy name (overrides default)")
+    host: Optional[str] = Field(None, description="CRDP server host (overrides default)")
+    port: Optional[int] = Field(None, description="CRDP server port (overrides default)")
 
 
 class RevealBulkRequest(BaseModel):
@@ -32,6 +38,8 @@ class RevealBulkRequest(BaseModel):
     protected_data_array: List[str] = Field(..., description="Array of protected tokens to reveal")
     policy: Optional[str] = Field(None, description="Protection policy name (overrides default)")
     username: Optional[str] = Field(None, description="Username for audit trail")
+    host: Optional[str] = Field(None, description="CRDP server host (overrides default)")
+    port: Optional[int] = Field(None, description="CRDP server port (overrides default)")
 
 
 class ProtectResponse(BaseModel):
@@ -62,12 +70,12 @@ class RevealBulkResponse(BaseModel):
     error: Optional[str] = None
 
 
-def get_client(policy: Optional[str] = None) -> ProtectRevealClient:
+def get_client(policy: Optional[str] = None, host: Optional[str] = None, port: Optional[int] = None) -> ProtectRevealClient:
     """Create ProtectRevealClient with settings."""
     settings = get_settings()
     return ProtectRevealClient(
-        host=settings.CRDP_API_HOST,
-        port=settings.CRDP_API_PORT,
+        host=host or settings.CRDP_API_HOST,
+        port=port or settings.CRDP_API_PORT,
         policy=policy or settings.CRDP_PROTECTION_POLICY,
         timeout=10
     )
@@ -80,7 +88,7 @@ async def protect_data(request: ProtectRequest):
     
     Returns a protected token that can be later revealed.
     """
-    client = get_client(request.policy)
+    client = get_client(request.policy, request.host, request.port)
     
     payload = {
         "protection_policy_name": client.policy,
@@ -116,7 +124,7 @@ async def reveal_data(request: RevealRequest):
     
     Optionally include username for audit trail.
     """
-    client = get_client(request.policy)
+    client = get_client(request.policy, request.host, request.port)
     
     payload = {
         "protection_policy_name": client.policy,
@@ -154,7 +162,7 @@ async def protect_bulk(request: ProtectBulkRequest):
     
     More efficient than multiple individual protect calls.
     """
-    client = get_client(request.policy)
+    client = get_client(request.policy, request.host, request.port)
     
     try:
         response = client.protect_bulk(request.data_array)
@@ -186,7 +194,7 @@ async def reveal_bulk(request: RevealBulkRequest):
     More efficient than multiple individual reveal calls.
     Optionally include username for audit trail.
     """
-    client = get_client(request.policy)
+    client = get_client(request.policy, request.host, request.port)
     
     try:
         response = client.reveal_bulk(request.protected_data_array, username=request.username)

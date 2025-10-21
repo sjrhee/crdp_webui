@@ -17,6 +17,9 @@ interface RevealResponse {
 export function ProtectReveal() {
   const { user, logout } = useAuth();
   const [protectInput, setProtectInput] = useState('1234567890123');
+  const [host, setHost] = useState('192.168.0.231');
+  const [port, setPort] = useState('32082');
+  const [policy, setPolicy] = useState('P03');
   const [protectResult, setProtectResult] = useState<ProtectResponse | null>(null);
   const [protectLoading, setProtectLoading] = useState(false);
 
@@ -28,14 +31,26 @@ export function ProtectReveal() {
   const [bulkProtectInput, setBulkProtectInput] = useState('001\n002\n003');
   const [bulkProtectResult, setBulkProtectResult] = useState<any>(null);
   const [bulkProtectLoading, setBulkProtectLoading] = useState(false);
+  const [progressLog, setProgressLog] = useState<any[]>([]);
 
   const handleProtect = async () => {
     setProtectLoading(true);
     setProtectResult(null);
+    setProgressLog([]);
     try {
+      // Validate 13-digit numeric input
+      if (!/^[0-9]{13}$/.test(protectInput)) {
+        throw new Error('입력은 정확히 13자리 숫자여야 합니다.');
+      }
+
       const response = await api.post('/api/crdp/protect', {
         data: protectInput,
+        policy,
+        host,
+        port: parseInt(port),
       });
+      // push progress
+      setProgressLog((p) => [...p, { stage: 'protect', request: { protection_policy_name: policy, data: protectInput }, response: response.data }]);
       setProtectResult(response.data);
       
       // Auto-fill reveal input with protected token
@@ -55,11 +70,16 @@ export function ProtectReveal() {
   const handleReveal = async () => {
     setRevealLoading(true);
     setRevealResult(null);
+    // keep progress log
     try {
       const response = await api.post('/api/crdp/reveal', {
         protected_data: revealInput,
         username: revealUsername || undefined,
+        policy,
+        host,
+        port: parseInt(port),
       });
+      setProgressLog((p) => [...p, { stage: 'reveal', request: { protection_policy_name: policy, protected_data: revealInput }, response: response.data }]);
       setRevealResult(response.data);
     } catch (error: any) {
       setRevealResult({
@@ -74,15 +94,19 @@ export function ProtectReveal() {
   const handleBulkProtect = async () => {
     setBulkProtectLoading(true);
     setBulkProtectResult(null);
+    setProgressLog([]);
     try {
       const dataArray = bulkProtectInput
         .split('\n')
         .map(line => line.trim())
         .filter(line => line.length > 0);
-      
       const response = await api.post('/api/crdp/protect-bulk', {
         data_array: dataArray,
+        policy,
+        host,
+        port: parseInt(port),
       });
+      setProgressLog((p) => [...p, { stage: 'protect_bulk', request: { protection_policy_name: policy, data_array: dataArray }, response: response.data }]);
       setBulkProtectResult(response.data);
     } catch (error: any) {
       setBulkProtectResult({
@@ -121,6 +145,29 @@ export function ProtectReveal() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
+        {/* Config inputs (host/port/policy) */}
+        <div style={{ gridColumn: '1 / span 2', border: '1px solid #ddd', padding: '1rem', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <label style={{ color: '#666' }}>CRDP IP</label>
+            <input value={host} onChange={(e) => setHost(e.target.value)} style={{ width: '180px', padding: '0.4rem' }} />
+            <label style={{ color: '#666' }}>CRDP Port</label>
+            <input value={port} onChange={(e) => setPort(e.target.value)} style={{ width: '120px', padding: '0.4rem' }} />
+            <label style={{ color: '#666' }}>Policy</label>
+            <input value={policy} onChange={(e) => setPolicy(e.target.value)} style={{ width: '120px', padding: '0.4rem' }} />
+            <label style={{ color: '#666' }}>
+              <input type="checkbox" checked={false} readOnly /> CORS 우회 프록시 사용(권장 아님)
+            </label>
+            <div style={{ marginLeft: 'auto' }}>
+              <button
+                onClick={() => { setProtectInput('1234567890123'); setRevealInput(''); setBulkProtectInput('001\n002\n003'); setProtectResult(null); setRevealResult(null); setBulkProtectResult(null); setProgressLog([]); }}
+                className="secondary"
+                style={{ padding: '0.5rem 0.75rem', backgroundColor: '#334155', color: 'white', borderRadius: '6px', border: 'none' }}
+              >
+                리셋
+              </button>
+            </div>
+          </div>
+        </div>
         {/* Protect Section */}
         <div style={{ border: '1px solid #ddd', padding: '1.5rem', borderRadius: '8px' }}>
           <h2>🔒 Protect (암호화)</h2>
@@ -374,6 +421,30 @@ export function ProtectReveal() {
             )}
           </div>
         )}
+      </div>
+
+      {/* Progress JSON and Results */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '2rem' }}>
+        <div style={{ border: '1px solid #ddd', padding: '1rem', borderRadius: '8px' }}>
+          <h3>진행 JSON</h3>
+          <pre style={{ background: '#0b1220', color: '#d1fae5', minHeight: '160px', maxHeight: '420px', overflow: 'auto', padding: '12px', borderRadius: '8px', border: '1px solid #1f2937' }}>
+            {JSON.stringify(progressLog, null, 2)}
+          </pre>
+        </div>
+
+        <div style={{ border: '1px solid #ddd', padding: '1rem', borderRadius: '8px' }}>
+          <h3>결과</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={{ color: '#666' }}>암호문(Protected):</span>
+              <code style={{ marginLeft: 'auto', fontFamily: 'monospace' }}>{protectResult?.protected_data ?? '-'}</code>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={{ color: '#666' }}>복호문(Revealed):</span>
+              <code style={{ marginLeft: 'auto', fontFamily: 'monospace' }}>{revealResult?.data ?? '-'}</code>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
