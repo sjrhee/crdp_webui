@@ -125,6 +125,32 @@ docker run -d --name crdp-frontend -p 8080:80 \
 	192.168.0.231:5001/frontend:<TAG>
 ```
 
+### 배포(docker-compose)
+
+로컬에서 백엔드/프론트엔드를 함께 올립니다. `docker-compose.yml`은 다음을 포함합니다:
+- backend: FastAPI (포트 8000 노출, CORS는 8080에 맞춤)
+- frontend: Nginx로 정적 서빙 + `/api/*`를 `backend:8000/api/*`로 프록시
+
+실행/중지:
+
+```bash
+# 빌드 후 백그라운드 실행
+docker compose up -d --build
+
+# 로그 보기
+docker compose logs -f
+
+# 중지 및 삭제
+docker compose down
+```
+
+접속:
+- 프론트엔드: http://localhost:8080/protect-reveal
+- 백엔드: http://localhost:8000/api/crdp/health
+
+환경 변수 변경(예: CRDP 연결 정보):
+- `docker-compose.yml`의 backend 환경변수 `CRDP_API_HOST/PORT/CRDP_PROTECTION_POLICY` 값을 수정하거나, 실행 시 `-e`로 덮어쓸 수 있습니다.
+
 ### 배포(Helm)
 
 로컬 레지스트리와 Ingress 환경을 고려한 값 파일: `helm/react-fastapi/values-local-registry.yaml`

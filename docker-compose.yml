@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: crdp-backend
+    environment:
+      # CRDP connection
+      - CRDP_API_HOST=192.168.0.231
+      - CRDP_API_PORT=32082
+      - CRDP_PROTECTION_POLICY=P03
+      # CORS for frontend on localhost:8080
+      - CORS_ORIGINS=["http://localhost:8080","http://127.0.0.1:8080"]
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: crdp-frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    # Nginx in the frontend image proxies /api/* to http://backend:8000/api/*
+    # See frontend/nginx.conf
+
+networks:
+  default:
+    name: crdp_webui_net
