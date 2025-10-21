@@ -47,6 +47,7 @@ class ProtectResponse(BaseModel):
     status_code: int
     protected_data: Optional[str] = None
     error: Optional[str] = None
+    debug: Optional[Dict[str, Any]] = None
 
 
 class RevealResponse(BaseModel):
@@ -54,6 +55,7 @@ class RevealResponse(BaseModel):
     status_code: int
     data: Optional[str] = None
     error: Optional[str] = None
+    debug: Optional[Dict[str, Any]] = None
 
 
 class ProtectBulkResponse(BaseModel):
@@ -61,6 +63,7 @@ class ProtectBulkResponse(BaseModel):
     status_code: int
     protected_data_array: Optional[List[str]] = None
     error: Optional[str] = None
+    debug: Optional[Dict[str, Any]] = None
 
 
 class RevealBulkResponse(BaseModel):
@@ -68,6 +71,7 @@ class RevealBulkResponse(BaseModel):
     status_code: int
     data_array: Optional[List[str]] = None
     error: Optional[str] = None
+    debug: Optional[Dict[str, Any]] = None
 
 
 def get_client(policy: Optional[str] = None, host: Optional[str] = None, port: Optional[int] = None) -> ProtectRevealClient:
@@ -107,17 +111,27 @@ async def protect_data(request: ProtectRequest):
     try:
         response = client.post_json(client.protect_url, payload)
         
+        debug = {
+            "url": response.request_url,
+            "request": payload,
+            "status_code": response.status_code,
+            "response": response.body,
+            "headers": response.request_headers,
+        }
+
         if not response.is_success:
             return ProtectResponse(
                 status_code=response.status_code or 500,
-                error=str(response.body) if response.body else "Protect failed"
+                error=str(response.body) if response.body else "Protect failed",
+                debug=debug,
             )
         
         protected_token = client.extract_protected_from_protect_response(response)
         
         return ProtectResponse(
             status_code=response.status_code or 200,
-            protected_data=protected_token
+            protected_data=protected_token,
+            debug=debug,
         )
         
     except APIError as e:
@@ -145,17 +159,27 @@ async def reveal_data(request: RevealRequest):
     try:
         response = client.post_json(client.reveal_url, payload)
         
+        debug = {
+            "url": response.request_url,
+            "request": payload,
+            "status_code": response.status_code,
+            "response": response.body,
+            "headers": response.request_headers,
+        }
+
         if not response.is_success:
             return RevealResponse(
                 status_code=response.status_code or 500,
-                error=str(response.body) if response.body else "Reveal failed"
+                error=str(response.body) if response.body else "Reveal failed",
+                debug=debug,
             )
         
         restored = client.extract_restored_from_reveal_response(response)
         
         return RevealResponse(
             status_code=response.status_code or 200,
-            data=restored
+            data=restored,
+            debug=debug,
         )
         
     except APIError as e:
@@ -176,17 +200,27 @@ async def protect_bulk(request: ProtectBulkRequest):
     try:
         response = client.protect_bulk(request.data_array)
         
+        debug = {
+            "url": response.request_url,
+            "request": {"protection_policy_name": client.policy, "data_array": request.data_array},
+            "status_code": response.status_code,
+            "response": response.body,
+            "headers": response.request_headers,
+        }
+
         if not response.is_success:
             return ProtectBulkResponse(
                 status_code=response.status_code or 500,
-                error=str(response.body) if response.body else "Bulk protect failed"
+                error=str(response.body) if response.body else "Bulk protect failed",
+                debug=debug,
             )
         
         protected_tokens = client.extract_protected_list_from_protect_response(response)
         
         return ProtectBulkResponse(
             status_code=response.status_code or 200,
-            protected_data_array=protected_tokens
+            protected_data_array=protected_tokens,
+            debug=debug,
         )
         
     except APIError as e:
@@ -208,17 +242,27 @@ async def reveal_bulk(request: RevealBulkRequest):
     try:
         response = client.reveal_bulk(request.protected_data_array, username=request.username)
         
+        debug = {
+            "url": response.request_url,
+            "request": {"protection_policy_name": client.policy, "protected_data_array": request.protected_data_array, **({"username": request.username} if request.username else {})},
+            "status_code": response.status_code,
+            "response": response.body,
+            "headers": response.request_headers,
+        }
+
         if not response.is_success:
             return RevealBulkResponse(
                 status_code=response.status_code or 500,
-                error=str(response.body) if response.body else "Bulk reveal failed"
+                error=str(response.body) if response.body else "Bulk reveal failed",
+                debug=debug,
             )
         
         restored_data = client.extract_restored_list_from_reveal_response(response)
         
         return RevealBulkResponse(
             status_code=response.status_code or 200,
-            data_array=restored_data
+            data_array=restored_data,
+            debug=debug,
         )
         
     except APIError as e:

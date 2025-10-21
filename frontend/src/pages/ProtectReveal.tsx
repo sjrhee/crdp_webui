@@ -6,47 +6,35 @@ interface ProtectResponse {
   status_code: number;
   protected_data?: string;
   error?: string;
+  debug?: Record<string, unknown>;
 }
 
 interface RevealResponse {
   status_code: number;
   data?: string;
   error?: string;
+  debug?: Record<string, unknown>;
 }
 
 interface BulkProtectResponse {
   status_code: number;
   protected_data_array?: string[];
   error?: string;
+  debug?: Record<string, unknown>;
 }
 
 interface BulkRevealResponse {
   status_code: number;
   data_array?: string[];
   error?: string;
+  debug?: Record<string, unknown>;
 }
 
 type ProgressEntry =
-  | {
-      stage: 'protect';
-      request: { protection_policy_name: string; data: string };
-      response: ProtectResponse;
-    }
-  | {
-      stage: 'reveal';
-      request: { protection_policy_name: string; protected_data: string };
-      response: RevealResponse;
-    }
-  | {
-      stage: 'protect_bulk';
-      request: { protection_policy_name: string; data_array: string[] };
-      response: BulkProtectResponse;
-    }
-  | {
-      stage: 'reveal_bulk';
-      request: { protection_policy_name: string; protected_data_array: string[] };
-      response: BulkRevealResponse;
-    };
+  | { stage: 'protect'; debug?: Record<string, unknown> }
+  | { stage: 'reveal'; debug?: Record<string, unknown> }
+  | { stage: 'protect_bulk'; debug?: Record<string, unknown> }
+  | { stage: 'reveal_bulk'; debug?: Record<string, unknown> };
 
 export function ProtectReveal() {
   const [protectInput, setProtectInput] = useState('1234567890123');
@@ -93,10 +81,7 @@ export function ProtectReveal() {
         host,
         port: parseInt(port, 10),
       });
-      setProgressLog((p) => [
-        ...p,
-        { stage: 'protect', request: { protection_policy_name: policy, data: protectInput }, response: response.data },
-      ]);
+      setProgressLog((p) => [...p, { stage: 'protect', debug: response.data?.debug }]);
       setProtectResult(response.data);
       if (response.data.protected_data) {
         setRevealInput(response.data.protected_data);
@@ -119,10 +104,7 @@ export function ProtectReveal() {
         host,
         port: parseInt(port, 10),
       });
-      setProgressLog((p) => [
-        ...p,
-        { stage: 'reveal', request: { protection_policy_name: policy, protected_data: revealInput }, response: response.data },
-      ]);
+      setProgressLog((p) => [...p, { stage: 'reveal', debug: response.data?.debug }]);
       setRevealResult(response.data);
     } catch (error: unknown) {
       const info = parseError(error);
@@ -147,11 +129,11 @@ export function ProtectReveal() {
         host,
         port: parseInt(port, 10),
       });
-      setProgressLog((p) => [
-        ...p,
-        { stage: 'protect_bulk', request: { protection_policy_name: policy, data_array: dataArray }, response: response.data },
-      ]);
+      setProgressLog((p) => [...p, { stage: 'protect_bulk', debug: response.data?.debug }]);
       setBulkProtectResult(response.data);
+      if (response.data?.protected_data_array && Array.isArray(response.data.protected_data_array)) {
+        setBulkRevealInput(response.data.protected_data_array.join('\n'));
+      }
     } catch (error: unknown) {
       const info = parseError(error);
       setBulkProtectResult({ status_code: info.status, error: info.message });
@@ -175,14 +157,7 @@ export function ProtectReveal() {
         host,
         port: parseInt(port, 10),
       });
-      setProgressLog((p) => [
-        ...p,
-        {
-          stage: 'reveal_bulk',
-          request: { protection_policy_name: policy, protected_data_array: protectedArray },
-          response: response.data,
-        },
-      ]);
+      setProgressLog((p) => [...p, { stage: 'reveal_bulk', debug: response.data?.debug }]);
       setBulkRevealResult(response.data);
     } catch (error: unknown) {
       const info = parseError(error);
@@ -372,16 +347,6 @@ export function ProtectReveal() {
                       <div className="row" style={{ marginBottom: 6 }}>
                         <span className="tag">Protected Tokens</span>
                         <div className="spacer" />
-                        <button
-                          className="btn btn-secondary"
-                          onClick={() =>
-                            setBulkRevealInput((bulkProtectResult.protected_data_array || []).join('\n'))
-                          }
-                          title="결과 토큰들을 Bulk Reveal 입력칸으로 보냅니다"
-                        >
-                          → Bulk Reveal로
-                        </button>
-                        <div style={{ width: 8 }} />
                         <span className="muted">{bulkProtectResult.protected_data_array.length}개</span>
                       </div>
                       <div className="code-box" style={{ maxHeight: 220, overflow: 'auto' }}>
