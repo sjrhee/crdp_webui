@@ -2,17 +2,18 @@ images:
   registry: "192.168.0.231:5001"
   backend:
     repository: backend
-    tag: local
+    tag: 20251021-082417
     pullPolicy: IfNotPresent
   frontend:
     repository: frontend
-    tag: local
+    tag: 20251021-082521
     pullPolicy: IfNotPresent
 
 ingress:
   enabled: true
+  className: nginx
   hosts:
-    - host: crdp.local
+    - host: crdp-webui.local
       paths:
         - path: /
           pathType: Prefix

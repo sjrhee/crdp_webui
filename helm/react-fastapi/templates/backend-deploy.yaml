@@ -39,6 +39,12 @@ spec:
               value: {{ .Values.backend.env.ACCESS_TOKEN_EXPIRE_MINUTES | quote }}
             - name: ALGORITHM
               value: {{ .Values.backend.env.ALGORITHM | quote }}
+            - name: CRDP_API_HOST
+              value: {{ .Values.backend.env.CRDP_API_HOST | quote }}
+            - name: CRDP_API_PORT
+              value: {{ .Values.backend.env.CRDP_API_PORT | quote }}
+            - name: CRDP_PROTECTION_POLICY
+              value: {{ .Values.backend.env.CRDP_PROTECTION_POLICY | quote }}
             - name: SECRET_KEY
               {{- if .Values.backend.secret.enabled }}
               valueFrom:

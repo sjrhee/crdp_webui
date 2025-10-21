@@ -20,6 +20,9 @@ backend:
     DEBUG: "true"
     ACCESS_TOKEN_EXPIRE_MINUTES: "60"
     ALGORITHM: "HS256"
+    CRDP_API_HOST: "192.168.0.231"
+    CRDP_API_PORT: "32082"
+    CRDP_PROTECTION_POLICY: "P03"
     # SECRET_KEY는 실제 배포에서 Secret로 주입 권장
     SECRET_KEY: "change_me_in_secret"
     CORS_ORIGINS: "[\"http://localhost:5173\",\"http://127.0.0.1:5173\"]"

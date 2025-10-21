@@ -1,9 +1,9 @@
 # React + FastAPI Starter
 
-이 프로젝트는 FastAPI 백엔드와 Vite + React(Typescript) 프론트엔드로 구성되며, JWT 인증, CORS 설정, Swagger UI 자동 문서화, 그리고 **CRDP Protect/Reveal API 통합**을 제공합니다.
+이 프로젝트는 FastAPI 백엔드와 Vite + React(Typescript) 프론트엔드로 구성되며, CORS 설정, Swagger UI 자동 문서화, 그리고 **CRDP Protect/Reveal API 통합**을 제공합니다. (미니멀 버전: 인증·아이템 라우트 제거, Protect/Reveal 전용)
 
 ## 구성
-- Backend: FastAPI, JWT(OAuth2 Password), CORS, pydantic-settings
+- Backend: FastAPI, CORS, pydantic-settings (Protect/Reveal 전용 API)
 - Frontend: Vite + React + TS, React Router, Axios 인터셉터
 - **CRDP Integration**: Protect/Reveal API (데이터 암호화/복호화)
 
@@ -26,14 +26,13 @@ npm run dev
 ```
 
 - Swagger UI: http://localhost:8000/docs
-- 기본 로그인 데모 계정: username=demo, password=demo
-- **Protect/Reveal UI**: http://localhost:5173/protect-reveal (로그인 후)
+- **Protect/Reveal UI**: http://localhost:5173/protect-reveal
 
 ## 환경 변수
 - backend/.env
   - SECRET_KEY: 자동 생성됨
   - CORS_ORIGINS: JSON 배열 혹은 콤마 구분 문자열 허용
-  - **CRDP_API_HOST**: CRDP API 서버 호스트 (기본: 192.168.0.231)
+  - **CRDP_API_HOST**: CRDP 암·복호화 서버 호스트(백엔드가 통신). 웹UI 도메인과 구분 필요.
   - **CRDP_API_PORT**: CRDP API 서버 포트 (기본: 32082)
   - **CRDP_PROTECTION_POLICY**: 보호 정책 이름 (기본: P03)
 - frontend/.env
@@ -59,16 +58,26 @@ npm run build
 
 ```bash
 # 로컬 레지스트리 사용 배포
-helm upgrade -i crdp ./helm/react-fastapi \
-  -n crdp --create-namespace \
+helm upgrade -i crdp-webui ./helm/react-fastapi \
+  -n crdp-webui --create-namespace \
   -f ./helm/react-fastapi/values-local-registry.yaml
 
 # 배포 상태 확인
-kubectl -n crdp get pods
-helm list -A
+kubectl -n crdp-webui get pods
+helm -n crdp-webui get all crdp-webui
 ```
 
 자세한 내용은 [helm/react-fastapi/README.md](./helm/react-fastapi/README.md)를 참조하세요.
+
+### 접속
+- Ingress 호스트(웹UI): values에서 기본 `crdp-webui.local`
+- CRDP 서버(백엔드가 통신): 예) `crdp.local` (별도 시스템)
+
+Windows 등 클라이언트 PC에서 hosts를 사용하는 경우:
+```
+192.168.0.240 crdp-webui.local
+```
+브라우저: http://crdp-webui.local/protect-reveal
 
 ### 트러블슈팅
 클러스터 운영 중 발생한 문제와 해결 방법은 [docs/troubleshooting](./docs/troubleshooting/)를 참조하세요.
@@ -76,7 +85,7 @@ helm list -A
 ## 다음 단계 제안
 - 프론트엔드 UI 개선 및 상태 관리 도입(Zustand/Recoil 등)
 - 백엔드 사용자 관리/DB 연동(SQLModel/SQLAlchemy) 추가
-- Ingress 설정 및 도메인 연결
+- Ingress 설정 및 도메인 연결(웹UI 도메인과 CRDP 도메인 혼동 방지)
 - CI/CD 파이프라인 구축
 - **CRDP Protect/Reveal 기능 확장** (배치 처리, 통계, 감사 로그 등)
 

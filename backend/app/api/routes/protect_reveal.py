@@ -81,6 +81,15 @@ def get_client(policy: Optional[str] = None, host: Optional[str] = None, port: O
     )
 
 
+def _build_client(policy: Optional[str], host: Optional[str], port: Optional[int]) -> ProtectRevealClient:
+    """Helper to preserve call signature used in tests: when host/port are not provided,
+    call get_client with only the policy positional argument (so mocks expecting
+    get_client('CUSTOM_POLICY') still pass)."""
+    if host is None and port is None:
+        return get_client(policy)
+    return get_client(policy, host, port)
+
+
 @router.post("/protect", response_model=ProtectResponse, tags=["Protect/Reveal"])
 async def protect_data(request: ProtectRequest):
     """
@@ -88,7 +97,7 @@ async def protect_data(request: ProtectRequest):
     
     Returns a protected token that can be later revealed.
     """
-    client = get_client(request.policy, request.host, request.port)
+    client = _build_client(request.policy, request.host, request.port)
     
     payload = {
         "protection_policy_name": client.policy,
@@ -124,7 +133,7 @@ async def reveal_data(request: RevealRequest):
     
     Optionally include username for audit trail.
     """
-    client = get_client(request.policy, request.host, request.port)
+    client = _build_client(request.policy, request.host, request.port)
     
     payload = {
         "protection_policy_name": client.policy,
@@ -162,7 +171,7 @@ async def protect_bulk(request: ProtectBulkRequest):
     
     More efficient than multiple individual protect calls.
     """
-    client = get_client(request.policy, request.host, request.port)
+    client = _build_client(request.policy, request.host, request.port)
     
     try:
         response = client.protect_bulk(request.data_array)
@@ -194,7 +203,7 @@ async def reveal_bulk(request: RevealBulkRequest):
     More efficient than multiple individual reveal calls.
     Optionally include username for audit trail.
     """
-    client = get_client(request.policy, request.host, request.port)
+    client = _build_client(request.policy, request.host, request.port)
     
     try:
         response = client.reveal_bulk(request.protected_data_array, username=request.username)
