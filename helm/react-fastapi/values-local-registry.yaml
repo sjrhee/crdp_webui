@@ -1,0 +1,22 @@
+images:
+  registry: "192.168.0.231:5001"
+  backend:
+    repository: backend
+    tag: local
+    pullPolicy: IfNotPresent
+  frontend:
+    repository: frontend
+    tag: local
+    pullPolicy: IfNotPresent
+
+ingress:
+  enabled: true
+  hosts:
+    - host: crdp.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+        - path: /api
+          pathType: Prefix
+          service: backend

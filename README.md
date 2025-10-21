@@ -47,7 +47,29 @@ cd frontend
 npm run build
 ```
 
+## Kubernetes 배포
+
+### Helm 차트
+프로젝트에는 Kubernetes 배포를 위한 Helm 차트가 포함되어 있습니다.
+
+```bash
+# 로컬 레지스트리 사용 배포
+helm upgrade -i crdp ./helm/react-fastapi \
+  -n crdp --create-namespace \
+  -f ./helm/react-fastapi/values-local-registry.yaml
+
+# 배포 상태 확인
+kubectl -n crdp get pods
+helm list -A
+```
+
+자세한 내용은 [helm/react-fastapi/README.md](./helm/react-fastapi/README.md)를 참조하세요.
+
+### 트러블슈팅
+클러스터 운영 중 발생한 문제와 해결 방법은 [docs/troubleshooting](./docs/troubleshooting/)를 참조하세요.
+
 ## 다음 단계 제안
-- Dockerfile / docker-compose로 로컬 개발 환경 컨테이너화
 - 프론트엔드 UI 개선 및 상태 관리 도입(Zustand/Recoil 등)
 - 백엔드 사용자 관리/DB 연동(SQLModel/SQLAlchemy) 추가
+- Ingress 설정 및 도메인 연결
+- CI/CD 파이프라인 구축
