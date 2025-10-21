@@ -2,32 +2,30 @@ import { useState } from 'react';
 import api from '../lib/api';
 import type { AxiosError } from 'axios';
 
-interface ProtectResponse {
+// ============================================================================
+// Types
+// ============================================================================
+
+interface ApiResponse {
   status_code: number;
+  error?: string;
+  debug?: Record<string, unknown>;
+}
+
+interface ProtectResponse extends ApiResponse {
   protected_data?: string;
-  error?: string;
-  debug?: Record<string, unknown>;
 }
 
-interface RevealResponse {
-  status_code: number;
+interface RevealResponse extends ApiResponse {
   data?: string;
-  error?: string;
-  debug?: Record<string, unknown>;
 }
 
-interface BulkProtectResponse {
-  status_code: number;
+interface BulkProtectResponse extends ApiResponse {
   protected_data_array?: string[];
-  error?: string;
-  debug?: Record<string, unknown>;
 }
 
-interface BulkRevealResponse {
-  status_code: number;
+interface BulkRevealResponse extends ApiResponse {
   data_array?: string[];
-  error?: string;
-  debug?: Record<string, unknown>;
 }
 
 type ProgressEntry =
@@ -36,25 +34,197 @@ type ProgressEntry =
   | { stage: 'protect_bulk'; debug?: Record<string, unknown> }
   | { stage: 'reveal_bulk'; debug?: Record<string, unknown> };
 
+interface Config {
+  host: string;
+  port: string;
+  policy: string;
+}
+
+// ============================================================================
+// Components
+// ============================================================================
+
+/** 설정 입력 섹션 */
+function ConfigSection({
+  config,
+  onConfigChange,
+  onReset,
+}: {
+  config: Config;
+  onConfigChange: (key: keyof Config, value: string) => void;
+  onReset: () => void;
+}) {
+  return (
+    <div className="card grid-span-2">
+      <div className="card-body">
+        <div className="form-row">
+          <div className="form-group" style={{ minWidth: 160 }}>
+            <label>CRDP IP</label>
+            <input
+              value={config.host}
+              onChange={(e) => onConfigChange('host', e.target.value)}
+              placeholder="예: 192.168.0.231"
+            />
+          </div>
+          <div className="form-group" style={{ minWidth: 120 }}>
+            <label>CRDP Port</label>
+            <input
+              value={config.port}
+              onChange={(e) => onConfigChange('port', e.target.value)}
+              placeholder="예: 32082"
+            />
+          </div>
+          <div className="form-group" style={{ minWidth: 120 }}>
+            <label>Policy</label>
+            <input
+              value={config.policy}
+              onChange={(e) => onConfigChange('policy', e.target.value)}
+              placeholder="예: P03"
+            />
+          </div>
+          <div className="spacer" />
+          <div className="actions">
+            <button onClick={onReset} className="btn btn-secondary">
+              리셋
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 단일 입력/결과 표시 컴포넌트 */
+function SingleResultBox({
+  label,
+  value,
+  error,
+  statusCode,
+}: {
+  label: string;
+  value?: string;
+  error?: string;
+  statusCode?: number;
+}) {
+  if (!value && !error) return null;
+
+  return (
+    <div className={`status-box ${error ? 'status-err' : 'status-ok'}`}>
+      <div className="row" style={{ marginBottom: 6 }}>
+        <span className="tag">Status</span>
+        <div>{statusCode}</div>
+      </div>
+      {value && (
+        <div>
+          <div className="row" style={{ marginBottom: 6 }}>
+            <span className="tag">{label}</span>
+            <div className="spacer" />
+            <button
+              className="btn btn-secondary"
+              onClick={() => navigator.clipboard.writeText(value)}
+            >
+              복사
+            </button>
+          </div>
+          <div className="code-box">{value}</div>
+        </div>
+      )}
+      {error && (
+        <div className="row" style={{ color: '#fca5a5' }}>
+          <span className="tag">Error</span>
+          <div>{error}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 배열 결과 표시 컴포넌트 */
+function ArrayResultBox({
+  label,
+  array,
+  error,
+  statusCode,
+}: {
+  label: string;
+  array?: string[];
+  error?: string;
+  statusCode?: number;
+}) {
+  if (!array && !error) return null;
+
+  return (
+    <div className={`status-box ${error ? 'status-err' : 'status-ok'}`}>
+      <div className="row" style={{ marginBottom: 6 }}>
+        <span className="tag">Status</span>
+        <div>{statusCode}</div>
+      </div>
+      {array && (
+        <div>
+          <div className="row" style={{ marginBottom: 6 }}>
+            <span className="tag">{label}</span>
+            <div className="spacer" />
+            <span className="muted">{array.length}개</span>
+          </div>
+          <div className="code-box" style={{ maxHeight: 220, overflow: 'auto' }}>
+            {array.map((item: string, idx: number) => (
+              <div key={idx} style={{ padding: '4px 0' }}>
+                {idx + 1}. {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {error && (
+        <div className="row" style={{ color: '#fca5a5' }}>
+          <span className="tag">Error</span>
+          <div>{error}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Main Component
+// ============================================================================
+
 export function ProtectReveal() {
+  // Config state
+  const [config, setConfig] = useState<Config>({
+    host: '192.168.0.231',
+    port: '32082',
+    policy: 'P03',
+  });
+
+  // Protect state
   const [protectInput, setProtectInput] = useState('1234567890123');
-  const [host, setHost] = useState('192.168.0.231');
-  const [port, setPort] = useState('32082');
-  const [policy, setPolicy] = useState('P03');
   const [protectResult, setProtectResult] = useState<ProtectResponse | null>(null);
   const [protectLoading, setProtectLoading] = useState(false);
 
+  // Reveal state
   const [revealInput, setRevealInput] = useState('');
   const [revealResult, setRevealResult] = useState<RevealResponse | null>(null);
   const [revealLoading, setRevealLoading] = useState(false);
 
-  const [bulkProtectInput, setBulkProtectInput] = useState('1234567890123\n1234567890124\n1234567890125');
+  // Bulk Protect state
+  const [bulkProtectInput, setBulkProtectInput] = useState(
+    '1234567890123\n1234567890124\n1234567890125'
+  );
   const [bulkProtectResult, setBulkProtectResult] = useState<BulkProtectResponse | null>(null);
   const [bulkProtectLoading, setBulkProtectLoading] = useState(false);
-  const [progressLog, setProgressLog] = useState<ProgressEntry[]>([]);
+
+  // Bulk Reveal state
   const [bulkRevealInput, setBulkRevealInput] = useState('');
   const [bulkRevealResult, setBulkRevealResult] = useState<BulkRevealResponse | null>(null);
   const [bulkRevealLoading, setBulkRevealLoading] = useState(false);
+
+  // Progress log
+  const [progressLog, setProgressLog] = useState<ProgressEntry[]>([]);
+
+  // =========================================================================
+  // Utility Functions
+  // =========================================================================
 
   const parseError = (e: unknown): { status: number; message: string } => {
     if (typeof e === 'object' && e !== null) {
@@ -65,6 +235,30 @@ export function ProtectReveal() {
     }
     return { status: 500, message: String(e) };
   };
+
+  const addProgress = (stage: ProgressEntry['stage'], debug?: Record<string, unknown>) => {
+    setProgressLog((p) => [...p, { stage, debug }]);
+  };
+
+  const resetAll = () => {
+    setProtectInput('1234567890123');
+    setRevealInput('');
+    setBulkProtectInput('1234567890123\n1234567890124\n1234567890125');
+    setProtectResult(null);
+    setRevealResult(null);
+    setBulkProtectResult(null);
+    setBulkRevealResult(null);
+    setBulkRevealInput('');
+    setProgressLog([]);
+  };
+
+  const handleConfigChange = (key: keyof Config, value: string) => {
+    setConfig((c) => ({ ...c, [key]: value }));
+  };
+
+  // =========================================================================
+  // API Handler Functions
+  // =========================================================================
 
   const handleProtect = async () => {
     setProtectLoading(true);
@@ -77,11 +271,11 @@ export function ProtectReveal() {
 
       const response = await api.post('/api/crdp/protect', {
         data: protectInput,
-        policy,
-        host,
-        port: parseInt(port, 10),
+        policy: config.policy,
+        host: config.host,
+        port: parseInt(config.port, 10),
       });
-      setProgressLog((p) => [...p, { stage: 'protect', debug: response.data?.debug }]);
+      addProgress('protect', response.data?.debug);
       setProtectResult(response.data);
       if (response.data.protected_data) {
         setRevealInput(response.data.protected_data);
@@ -100,11 +294,11 @@ export function ProtectReveal() {
     try {
       const response = await api.post('/api/crdp/reveal', {
         protected_data: revealInput,
-        policy,
-        host,
-        port: parseInt(port, 10),
+        policy: config.policy,
+        host: config.host,
+        port: parseInt(config.port, 10),
       });
-      setProgressLog((p) => [...p, { stage: 'reveal', debug: response.data?.debug }]);
+      addProgress('reveal', response.data?.debug);
       setRevealResult(response.data);
     } catch (error: unknown) {
       const info = parseError(error);
@@ -125,11 +319,11 @@ export function ProtectReveal() {
         .filter((line) => line.length > 0);
       const response = await api.post('/api/crdp/protect-bulk', {
         data_array: dataArray,
-        policy,
-        host,
-        port: parseInt(port, 10),
+        policy: config.policy,
+        host: config.host,
+        port: parseInt(config.port, 10),
       });
-      setProgressLog((p) => [...p, { stage: 'protect_bulk', debug: response.data?.debug }]);
+      addProgress('protect_bulk', response.data?.debug);
       setBulkProtectResult(response.data);
       if (response.data?.protected_data_array && Array.isArray(response.data.protected_data_array)) {
         setBulkRevealInput(response.data.protected_data_array.join('\n'));
@@ -153,11 +347,11 @@ export function ProtectReveal() {
         .filter((line) => line.length > 0);
       const response = await api.post('/api/crdp/reveal-bulk', {
         protected_data_array: protectedArray,
-        policy,
-        host,
-        port: parseInt(port, 10),
+        policy: config.policy,
+        host: config.host,
+        port: parseInt(config.port, 10),
       });
-      setProgressLog((p) => [...p, { stage: 'reveal_bulk', debug: response.data?.debug }]);
+      addProgress('reveal_bulk', response.data?.debug);
       setBulkRevealResult(response.data);
     } catch (error: unknown) {
       const info = parseError(error);
@@ -182,43 +376,7 @@ export function ProtectReveal() {
         <p className="page-desc">데이터 암호화/복호화를 빠르게 검증하는 간단한 도구입니다.</p>
 
         <div className="grid-2">
-          <div className="card grid-span-2">
-            <div className="card-body">
-              <div className="form-row">
-                <div className="form-group" style={{ minWidth: 160 }}>
-                  <label>CRDP IP</label>
-                  <input value={host} onChange={(e) => setHost(e.target.value)} placeholder="예: 192.168.0.231" />
-                </div>
-                <div className="form-group" style={{ minWidth: 120 }}>
-                  <label>CRDP Port</label>
-                  <input value={port} onChange={(e) => setPort(e.target.value)} placeholder="예: 32082" />
-                </div>
-                <div className="form-group" style={{ minWidth: 120 }}>
-                  <label>Policy</label>
-                  <input value={policy} onChange={(e) => setPolicy(e.target.value)} placeholder="예: P03" />
-                </div>
-                <div className="spacer" />
-                <div className="actions">
-                  <button
-                    onClick={() => {
-                      setProtectInput('1234567890123');
-                      setRevealInput('');
-                      setBulkProtectInput('1234567890123\n1234567890124\n1234567890125');
-                      setProtectResult(null);
-                      setRevealResult(null);
-                      setBulkProtectResult(null);
-                      setBulkRevealResult(null);
-                      setBulkRevealInput('');
-                      setProgressLog([]);
-                    }}
-                    className="btn btn-secondary"
-                  >
-                    리셋
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ConfigSection config={config} onConfigChange={handleConfigChange} onReset={resetAll} />
 
           <div className="card">
             <div className="card-body">
@@ -237,33 +395,12 @@ export function ProtectReveal() {
               </button>
 
               {protectResult && (
-                <div className={`status-box ${protectResult.error ? 'status-err' : 'status-ok'}`}>
-                  <div className="row" style={{ marginBottom: 6 }}>
-                    <span className="tag">Status</span>
-                    <div>{protectResult.status_code}</div>
-                  </div>
-                  {protectResult.protected_data && (
-                    <div>
-                      <div className="row" style={{ marginBottom: 6 }}>
-                        <span className="tag">Protected Token</span>
-                        <div className="spacer" />
-                        <button
-                          className="btn btn-secondary"
-                          onClick={() => navigator.clipboard.writeText(protectResult.protected_data || '')}
-                        >
-                          복사
-                        </button>
-                      </div>
-                      <div className="code-box">{protectResult.protected_data}</div>
-                    </div>
-                  )}
-                  {protectResult.error && (
-                    <div className="row" style={{ color: '#fca5a5' }}>
-                      <span className="tag">Error</span>
-                      <div>{protectResult.error}</div>
-                    </div>
-                  )}
-                </div>
+                <SingleResultBox
+                  label="Protected Token"
+                  value={protectResult.protected_data}
+                  error={protectResult.error}
+                  statusCode={protectResult.status_code}
+                />
               )}
             </div>
           </div>
@@ -286,33 +423,12 @@ export function ProtectReveal() {
               </button>
 
               {revealResult && (
-                <div className={`status-box ${revealResult.error ? 'status-err' : 'status-ok'}`}>
-                  <div className="row" style={{ marginBottom: 6 }}>
-                    <span className="tag">Status</span>
-                    <div>{revealResult.status_code}</div>
-                  </div>
-                  {revealResult.data && (
-                    <div>
-                      <div className="row" style={{ marginBottom: 6 }}>
-                        <span className="tag">Revealed Data</span>
-                        <div className="spacer" />
-                        <button
-                          className="btn btn-secondary"
-                          onClick={() => navigator.clipboard.writeText(revealResult.data || '')}
-                        >
-                          복사
-                        </button>
-                      </div>
-                      <div className="code-box">{revealResult.data}</div>
-                    </div>
-                  )}
-                  {revealResult.error && (
-                    <div className="row" style={{ color: '#fca5a5' }}>
-                      <span className="tag">Error</span>
-                      <div>{revealResult.error}</div>
-                    </div>
-                  )}
-                </div>
+                <SingleResultBox
+                  label="Revealed Data"
+                  value={revealResult.data}
+                  error={revealResult.error}
+                  statusCode={revealResult.status_code}
+                />
               )}
             </div>
           </div>
@@ -337,34 +453,12 @@ export function ProtectReveal() {
               </button>
 
               {bulkProtectResult && (
-                <div className={`status-box ${bulkProtectResult.error ? 'status-err' : 'status-ok'}`}>
-                  <div className="row" style={{ marginBottom: 6 }}>
-                    <span className="tag">Status</span>
-                    <div>{bulkProtectResult.status_code}</div>
-                  </div>
-                  {bulkProtectResult.protected_data_array && (
-                    <div>
-                      <div className="row" style={{ marginBottom: 6 }}>
-                        <span className="tag">Protected Tokens</span>
-                        <div className="spacer" />
-                        <span className="muted">{bulkProtectResult.protected_data_array.length}개</span>
-                      </div>
-                      <div className="code-box" style={{ maxHeight: 220, overflow: 'auto' }}>
-                        {bulkProtectResult.protected_data_array.map((token: string, idx: number) => (
-                          <div key={idx} style={{ padding: '4px 0' }}>
-                            {idx + 1}. {token}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {bulkProtectResult.error && (
-                    <div className="row" style={{ color: '#fca5a5' }}>
-                      <span className="tag">Error</span>
-                      <div>{bulkProtectResult.error}</div>
-                    </div>
-                  )}
-                </div>
+                <ArrayResultBox
+                  label="Protected Tokens"
+                  array={bulkProtectResult.protected_data_array}
+                  error={bulkProtectResult.error}
+                  statusCode={bulkProtectResult.status_code}
+                />
               )}
             </div>
           </div>
@@ -387,34 +481,12 @@ export function ProtectReveal() {
               </button>
 
               {bulkRevealResult && (
-                <div className={`status-box ${bulkRevealResult.error ? 'status-err' : 'status-ok'}`}>
-                  <div className="row" style={{ marginBottom: 6 }}>
-                    <span className="tag">Status</span>
-                    <div>{bulkRevealResult.status_code}</div>
-                  </div>
-                  {bulkRevealResult.data_array && (
-                    <div>
-                      <div className="row" style={{ marginBottom: 6 }}>
-                        <span className="tag">Revealed Data</span>
-                        <div className="spacer" />
-                        <span className="muted">{bulkRevealResult.data_array.length}개</span>
-                      </div>
-                      <div className="code-box" style={{ maxHeight: 220, overflow: 'auto' }}>
-                        {bulkRevealResult.data_array.map((val: string, idx: number) => (
-                          <div key={idx} style={{ padding: '4px 0' }}>
-                            {idx + 1}. {val}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {bulkRevealResult.error && (
-                    <div className="row" style={{ color: '#fca5a5' }}>
-                      <span className="tag">Error</span>
-                      <div>{bulkRevealResult.error}</div>
-                    </div>
-                  )}
-                </div>
+                <ArrayResultBox
+                  label="Revealed Data"
+                  array={bulkRevealResult.data_array}
+                  error={bulkRevealResult.error}
+                  statusCode={bulkRevealResult.status_code}
+                />
               )}
             </div>
           </div>
