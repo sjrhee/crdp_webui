@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import api from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ProtectResponse {
   status_code: number;
@@ -14,6 +15,7 @@ interface RevealResponse {
 }
 
 export function ProtectReveal() {
+  const { user, logout } = useAuth();
   const [protectInput, setProtectInput] = useState('1234567890123');
   const [protectResult, setProtectResult] = useState<ProtectResponse | null>(null);
   const [protectLoading, setProtectLoading] = useState(false);
@@ -94,10 +96,29 @@ export function ProtectReveal() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1>CRDP Protect/Reveal</h1>
-      <p style={{ color: '#666', marginBottom: '2rem' }}>
-        데이터를 암호화(Protect)하고 복호화(Reveal)하는 API 테스트 페이지입니다.
-      </p>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div>
+          <h1 style={{ margin: 0 }}>CRDP Protect/Reveal</h1>
+          <p style={{ color: '#666', margin: '0.5rem 0 0 0' }}>
+            안녕하세요, {user?.username}님! 데이터를 암호화(Protect)하고 복호화(Reveal)하는 API 테스트 페이지입니다.
+          </p>
+        </div>
+        <button
+          onClick={logout}
+          style={{
+            padding: '0.5rem 1rem',
+            backgroundColor: '#dc3545',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+          }}
+        >
+          로그아웃
+        </button>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
         {/* Protect Section */}
