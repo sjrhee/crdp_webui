@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios, { AxiosError } from 'axios';
 import api from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 type Item = { id: number; name: string; description?: string };
 type ProtectRequestMeta = { url: string; headers: Record<string, string>; body: Record<string, unknown> };
@@ -47,7 +48,12 @@ const Home: React.FC = () => {
     <div style={{ maxWidth: 720, margin: '40px auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>안녕하세요, {user?.username}</h2>
-        <button onClick={logout}>로그아웃</button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <Link to="/protect-reveal" style={{ textDecoration: 'none', color: '#007bff' }}>
+            🔒 Protect/Reveal (신규)
+          </Link>
+          <button onClick={logout}>로그아웃</button>
+        </div>
       </div>
       <h3>아이템</h3>
       {error && <div style={{ color: 'red' }}>{error}</div>}
