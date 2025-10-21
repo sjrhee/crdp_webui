@@ -103,26 +103,6 @@ pytest -q
 - UI 기반 테스트: 프론트엔드 화면에서 Protect/Reveal 실험
 - API 기반 테스트: 위 API 엔드포인트에 JSON payload로 직접 호출
 
-### Quick use
-
-가장 빠른 실행 요약입니다. 자세한 설명은 아래 배포 섹션을 참고하세요.
-
-- 로컬 한 번에 (docker-compose)
-```bash
-docker compose up -d --build
-# Frontend: http://localhost:8080/protect-reveal
-# Backend health: http://localhost:8000/api/crdp/health
-```
-
-- 빌드 후 Helm 배포 (원클릭)
-```bash
-export REGISTRY=192.168.0.231:5001
-export TAG=$(date +%Y%m%d-%H%M%S)   # 생략 가능
-bash scripts/build_and_deploy.sh
-# 상태 확인
-kubectl get pods,svc,ingress -n crdp-webui
-```
-
 ### 배포(도커)
 
 아래는 예시입니다. 환경에 맞게 레지스트리 주소/태그를 변경하세요.
