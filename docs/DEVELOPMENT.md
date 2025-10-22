@@ -190,3 +190,40 @@ make stop
 make clean
 make setup
 ```
+
+### Vite 개발 서버에 curl이 멈추는 문제
+
+증상:
+- `curl -s http://localhost:5173/` 실행 시 출력 없이 멈춤 또는 매우 느린 응답
+
+원인 후보와 해결책:
+- 프록시 환경 변수 영향
+   - curl은 환경 변수의 프록시 설정을 따릅니다. 로컬(hostname: localhost, 127.0.0.1, ::1) 요청도 프록시로 보내면 응답이 지연/실패할 수 있습니다.
+   - 해결: 프록시 우회를 명시하거나 NO_PROXY를 설정하세요.
+
+```bash
+# 1) 일회성 우회
+curl --noproxy "*" http://localhost:5173/
+
+# 2) 현재 셸에서 로컬 우회 설정
+export NO_PROXY=localhost,127.0.0.1,::1
+export no_proxy=localhost,127.0.0.1,::1
+
+# 3) 영구 설정 (~/.bashrc 등)
+echo 'export NO_PROXY=localhost,127.0.0.1,::1' >> ~/.bashrc
+echo 'export no_proxy=localhost,127.0.0.1,::1' >> ~/.bashrc
+```
+
+- 서버 프로세스가 백그라운드에서 종료됨
+   - `npm run dev`를 백그라운드(`&`)로 띄운 후 터미널이 종료되거나 HUP 시그널을 받아 종료될 수 있습니다.
+   - 해결: 별도 터미널에서 포그라운드로 실행하거나 `nohup` 사용, 혹은 `make dev` 사용을 권장합니다.
+
+확인 절차:
+```bash
+# 포트 리스닝 확인
+lsof -i:5173
+
+# Vite 로그 확인
+tail -n +1 /tmp/vite.log 2>/dev/null | tail -20
+```
+
