@@ -272,7 +272,7 @@ async def reveal_bulk(request: RevealBulkRequest):
 
 
 @router.get("/health", tags=["Protect/Reveal"])
-async def health_check(policy: Optional[str] = None, host: Optional[str] = None, port: Optional[int] = None):
+async def health_check(policy: Optional[str] = None, host: Optional[str] = None, port: Optional[int] = None, healthz_port: Optional[int] = None):
     """
     Health check endpoint.
 
@@ -285,40 +285,56 @@ async def health_check(policy: Optional[str] = None, host: Optional[str] = None,
     # Build client with possible overrides
     client = ProtectRevealClient(
         host=host or settings.CRDP_API_HOST,
-        port=port or settings.CRDP_API_PORT,
+        port=port or settings.CRDP_API_PORT,  # protect/reveal port
         policy=policy or settings.CRDP_PROTECTION_POLICY,
         timeout=5,
+        healthz_port=healthz_port or getattr(settings, "CRDP_HEALTHZ_PORT", None),  # healthz port (defaults to settings)
     )
 
     steps: list[dict] = []
 
-    # Step 1: try a minimal protect call using sample data to validate reachability
-    sample = getattr(settings, "CRDP_SAMPLE_DATA", "1234567890123")
-    payload = {"protection_policy_name": client.policy, "data": sample}
+    # Step 1: CRDP healthz (GET)
     try:
-        resp = client.post_json(client.protect_url, payload)
-        step_debug = {
-            "stage": "protect_sample",
+        resp = client.healthz()
+        steps.append({
+            "stage": "healthz",
+            "method": "GET",
             "url": resp.request_url,
-            "request": payload,
             "status_code": resp.status_code,
             "response": resp.body,
             "headers": resp.request_headers,
-        }
-        steps.append(step_debug)
-        ok = resp.is_success
-        status = "healthy" if ok else "unhealthy"
+        })
+        ok_get = resp.is_success
     except Exception as e:
+        steps.append({"stage": "healthz", "method": "GET", "error": str(e)})
+        ok_get = False
+
+    # Step 2: minimal protect sample (POST) for additional verification
+    sample = getattr(settings, "CRDP_SAMPLE_DATA", "1234567890123")
+    payload = {"protection_policy_name": client.policy, "data": sample}
+    try:
+        resp2 = client.post_json(client.protect_url, payload)
         steps.append({
             "stage": "protect_sample",
-            "error": str(e),
+            "method": "POST",
+            "url": resp2.request_url,
+            "request": payload,
+            "status_code": resp2.status_code,
+            "response": resp2.body,
+            "headers": resp2.request_headers,
         })
-        status = "unhealthy"
+        ok_post = resp2.is_success
+    except Exception as e:
+        steps.append({"stage": "protect_sample", "method": "POST", "error": str(e)})
+        ok_post = False
+
+    status = "healthy" if ok_get else "unhealthy"
 
     return {
         "status": status,
-        "crdp_api_host": client.base_url.split("://", 1)[-1].split(":")[0],
+        "crdp_api_host": client.host,
         "crdp_api_port": port or settings.CRDP_API_PORT,
+        "healthz_port": healthz_port or getattr(settings, "CRDP_HEALTHZ_PORT", None),
         "protection_policy": client.policy,
         "steps": steps,
     }

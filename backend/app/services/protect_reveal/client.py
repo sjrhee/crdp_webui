@@ -32,16 +32,44 @@ class APIResponse:
 
 
 class ProtectRevealClient:
-    def __init__(self, host: str, port: int, policy: str, timeout: int = 10):
+    def __init__(self, host: str, port: int, policy: str, timeout: int = 10, healthz_port: Optional[int] = None):
+        # Main API (protect/reveal) base URL
+        self.host = host
+        self.port = port
         self.base_url = f"http://{host}:{port}"
         self.protect_url = urljoin(self.base_url, "/v1/protect")
         self.protect_bulk_url = urljoin(self.base_url, "/v1/protectbulk")
         self.reveal_url = urljoin(self.base_url, "/v1/reveal")
         self.reveal_bulk_url = urljoin(self.base_url, "/v1/revealbulk")
+        # Thales CRDP health endpoint (no /v1 prefix), possibly different port
+        hz_port = healthz_port if healthz_port is not None else port
+        self.healthz_url = f"http://{host}:{hz_port}/healthz"
         self.policy = policy
         self.timeout = timeout
         self.session = requests.Session()
         self.session.headers.update({"Content-Type": "application/json"})
+
+    def get_json(self, url: str) -> APIResponse:
+        try:
+            resp = self.session.get(url, timeout=self.timeout)
+        except requests.RequestException as exc:
+            resp = getattr(exc, 'response', None)
+            if resp is None:
+                return APIResponse(None, str(exc))
+
+        status = getattr(resp, 'status_code', None)
+        try:
+            body = resp.json()
+        except Exception:
+            body = getattr(resp, 'text', None)
+
+        return APIResponse(
+            status,
+            body,
+            request_payload=None,
+            request_url=url,
+            request_headers=dict(self.session.headers),
+        )
 
     def post_json(self, url: str, payload: Dict[str, Any]) -> APIResponse:
         try:
@@ -103,6 +131,11 @@ class ProtectRevealClient:
             payload["username"] = username
 
         return self.post_json(self.reveal_bulk_url, payload)
+
+    # Healthz helper
+    def healthz(self) -> APIResponse:
+        """Call CRDP healthz endpoint (GET /healthz)."""
+        return self.get_json(self.healthz_url)
 
     def extract_protected_list_from_protect_response(self, response: APIResponse) -> list:
         """Extract a list of protected tokens from a bulk protect response.

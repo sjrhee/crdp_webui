@@ -43,6 +43,8 @@ spec:
               value: {{ .Values.backend.env.CRDP_API_HOST | quote }}
             - name: CRDP_API_PORT
               value: {{ .Values.backend.env.CRDP_API_PORT | quote }}
+            - name: CRDP_HEALTHZ_PORT
+              value: {{ .Values.backend.env.CRDP_HEALTHZ_PORT | quote }}
             - name: CRDP_PROTECTION_POLICY
               value: {{ .Values.backend.env.CRDP_PROTECTION_POLICY | quote }}
             - name: SECRET_KEY

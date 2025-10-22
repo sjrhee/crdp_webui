@@ -280,7 +280,13 @@ export function ProtectReveal() {
 
   const handleHealthCheck = async () => {
     try {
-      const res = await api.get('/api/crdp/health');
+      const res = await api.get('/api/crdp/health', {
+        params: {
+          host: config.host,
+          port: parseInt(config.port, 10),
+          policy: config.policy,
+        },
+      });
       addProgress('health', res.data);
       const { status, crdp_api_host, crdp_api_port, protection_policy } = res.data || {};
       setHealthStatus({

@@ -83,10 +83,10 @@ sudo systemctl status containerd
 
 ```bash
 # 파드 삭제해서 재생성
-kubectl -n crdp delete pod --all
+kubectl -n crdp-webui delete pod --all
 
 # 파드 상태 확인
-kubectl -n crdp get pods -w
+kubectl -n crdp-webui get pods -w
 ```
 
 ## 문제 해결 체크리스트

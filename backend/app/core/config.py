@@ -18,7 +18,10 @@ class Settings(BaseSettings):
 
     # CRDP defaults
     CRDP_API_HOST: str = "192.168.0.231"
+    # Protect/Reveal API 포트 (v1 API)
     CRDP_API_PORT: int = 32082
+    # Healthz 전용 포트
+    CRDP_HEALTHZ_PORT: int = 32080
     CRDP_PROTECTION_POLICY: str = "P03"
     CRDP_SAMPLE_DATA: str = "1234567890123"
     # Accept JSON array or comma-separated string for CORS_ORIGINS

@@ -122,7 +122,7 @@ sudo -n true && echo OK || echo "NOPASSWD 미적용"
 
 ## 부록: 네임스페이스별 빠른 조회
 ```bash
-NS=crdp
+NS=crdp-webui
 kubectl -n "$NS" get deploy,svc,pods
 kubectl -n "$NS" describe deploy <DEPLOY>
 ```
