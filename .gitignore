@@ -14,10 +14,22 @@ backend/.venv/
 # FastAPI/UVicorn
 *.sqlite3
 
+# Logs
+*.log
+logs/
+backend/logs/
+
+# Test coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.pytest_cache/
+
 # Node/React/Vite
 node_modules/
 dist/
-*.log
 
 # Env
 .env
