@@ -1,6 +1,6 @@
 ## 구성
 
-- 목적: CRDP Protect/Reveal 기능을 빠르게 시험·데모하기 위한 최소 Web UI
+- 목적: k8s 클러스터 내부의 애플리케이션에서 CRDP Protect/Reveal 기능을 빠르게 시험·데모하기 위한 최소 Web UI
 - 백엔드: FastAPI (Python)
 - 프론트엔드: React + Vite (TypeScript)
 - 배포: Helm Chart (Kubernetes), 선택적으로 Ingress/MetalLB 사용
