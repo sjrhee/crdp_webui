@@ -16,14 +16,33 @@ docs/              # 트러블슈팅/런북 문서
 
 ## 요구사항
 
-- 로컬 개발: Python 3.10+, Node.js 18+ (npm), Git
-- 선택: Kubernetes 클러스터, Helm 3.x (배포 시)
-- 외부 CRDP API 접근(기본값: 192.168.0.231:32082)
-
 ## 설치 및 설정
 
 - 백엔드 의존성 설치: `pip install -r backend/requirements.txt`
 - 프론트엔드 의존성 설치: `npm install` (디렉터리: `frontend/`)
+## 아키텍처 (Architecture)
+
+아래 다이어그램은 클러스터 내 CRDP 서비스(복수의 CRDP 인스턴스/서비스), MetalLB/Ingress, 그리고 CRDP를 사용하는 애플리케이션들이 어떻게 연결되는지 보여줍니다.
+
+![CRDP architecture diagram](./assets/crdp-architecture.png)
+
+요점 요약:
+- 여러 CRDP 서비스가 클러스터 내부에서 Replica Pod로 동작하고, 각 서비스는 내부 ClusterIP로 라우팅됩니다.
+- 외부 애플리케이션은 MetalLB/Ingress를 통해 RESTful API(예: 이 웹 UI)를 호출합니다.
+- Protect/Reveal API는 CRDP의 v1 엔드포인트(예: :32082)를 사용하고, Healthz는 별도의 포트(:32080)에서 제공될 수 있습니다.
+
+네임스페이스 및 포트 관례:
+- 네임스페이스: `crdp-webui` (배포/운영 리소스는 이 네임스페이스로 통일)
+- Protect/Reveal API 포트: 기본 `CRDP_API_PORT=32082`
+- Healthz 포트: 기본 `CRDP_HEALTHZ_PORT=32080` (Healthz는 별도 포트로 노출될 수 있음)
+
+검증/디버그(간단 명령):
+- 클러스터 내부에서 healthz 직접 호출(예: HTTP):
+	- curl -sS http://192.168.0.231:32080/healthz
+- 백엔드 헬스 체크 엔드포인트 호출(포트포워딩 또는 인클러스터):
+	- kubectl -n crdp-webui port-forward svc/crdp-webui-react-fastapi-backend 8000:8000
+	- curl -sS "http://localhost:8000/api/crdp/health?host=192.168.0.231&port=32082&policy=P03" | jq .
+
 - 환경 변수(백엔드):
 	- `CRDP_API_HOST` (기본: 192.168.0.231)
 	- `CRDP_API_PORT` (기본: 32082)
