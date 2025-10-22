@@ -1,11 +1,14 @@
 """Protect/Reveal API routes."""
-from fastapi import APIRouter, HTTPException, Depends
+import logging
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from typing import List, Optional, Any, Dict
 from app.services.protect_reveal.client import ProtectRevealClient, APIError
 from app.core.config import get_settings
+from app.core.exceptions import CRDPConnectionError, CRDPAPIError, CRDPTimeoutError
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 class ProtectRequest(BaseModel):
@@ -101,6 +104,7 @@ async def protect_data(request: ProtectRequest):
     
     Returns a protected token that can be later revealed.
     """
+    logger.info(f"Protect request received for data length: {len(request.data)}")
     client = _build_client(request.policy, request.host, request.port)
     
     payload = {
@@ -120,6 +124,7 @@ async def protect_data(request: ProtectRequest):
         }
 
         if not response.is_success:
+            logger.warning(f"Protect failed: {response.status_code} - {response.body}")
             return ProtectResponse(
                 status_code=response.status_code or 500,
                 error=str(response.body) if response.body else "Protect failed",
@@ -127,6 +132,7 @@ async def protect_data(request: ProtectRequest):
             )
         
         protected_token = client.extract_protected_from_protect_response(response)
+        logger.info(f"Protect successful: {protected_token[:20]}...")
         
         return ProtectResponse(
             status_code=response.status_code or 200,
@@ -135,9 +141,16 @@ async def protect_data(request: ProtectRequest):
         )
         
     except APIError as e:
-        raise HTTPException(status_code=e.status_code or 500, detail=str(e))
+        logger.error(f"CRDP API error during protect: {str(e)}")
+        if "connection" in str(e).lower() or "refused" in str(e).lower():
+            raise CRDPConnectionError(f"Failed to connect to CRDP server: {str(e)}")
+        elif "timeout" in str(e).lower():
+            raise CRDPTimeoutError(f"CRDP API timeout: {str(e)}")
+        else:
+            raise CRDPAPIError(str(e), status_code=e.status_code or 500)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        logger.exception(f"Unexpected error during protect: {str(e)}")
+        raise CRDPAPIError(f"Unexpected error: {str(e)}")
 
 
 @router.post("/reveal", response_model=RevealResponse, tags=["Protect/Reveal"])
@@ -147,6 +160,7 @@ async def reveal_data(request: RevealRequest):
     
     Optionally include username for audit trail.
     """
+    logger.info(f"Reveal request received for protected_data length: {len(request.protected_data)}")
     client = _build_client(request.policy, request.host, request.port)
     
     payload = {
@@ -168,6 +182,7 @@ async def reveal_data(request: RevealRequest):
         }
 
         if not response.is_success:
+            logger.warning(f"Reveal failed: {response.status_code} - {response.body}")
             return RevealResponse(
                 status_code=response.status_code or 500,
                 error=str(response.body) if response.body else "Reveal failed",
@@ -175,6 +190,7 @@ async def reveal_data(request: RevealRequest):
             )
         
         restored = client.extract_restored_from_reveal_response(response)
+        logger.info(f"Reveal successful: {restored[:20]}...")
         
         return RevealResponse(
             status_code=response.status_code or 200,
@@ -183,9 +199,16 @@ async def reveal_data(request: RevealRequest):
         )
         
     except APIError as e:
-        raise HTTPException(status_code=e.status_code or 500, detail=str(e))
+        logger.error(f"CRDP API error during reveal: {str(e)}")
+        if "connection" in str(e).lower() or "refused" in str(e).lower():
+            raise CRDPConnectionError(f"Failed to connect to CRDP server: {str(e)}")
+        elif "timeout" in str(e).lower():
+            raise CRDPTimeoutError(f"CRDP API timeout: {str(e)}")
+        else:
+            raise CRDPAPIError(str(e), status_code=e.status_code or 500)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+        logger.exception(f"Unexpected error during reveal: {str(e)}")
+        raise CRDPAPIError(f"Unexpected error: {str(e)}")
 
 
 @router.post("/protect-bulk", response_model=ProtectBulkResponse, tags=["Protect/Reveal"])
