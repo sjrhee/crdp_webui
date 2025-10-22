@@ -272,17 +272,53 @@ async def reveal_bulk(request: RevealBulkRequest):
 
 
 @router.get("/health", tags=["Protect/Reveal"])
-async def health_check():
+async def health_check(policy: Optional[str] = None, host: Optional[str] = None, port: Optional[int] = None):
     """
-    Health check endpoint for Protect/Reveal service.
-    
-    Verifies connection to CRDP API server.
+    Health check endpoint.
+
+    - Attempts a lightweight CRDP call (protect with sample data) to verify connectivity.
+    - Returns debug steps so the UI can show a progress log.
+    - Accepts optional overrides via query params: policy, host, port.
     """
     settings = get_settings()
-    
+
+    # Build client with possible overrides
+    client = ProtectRevealClient(
+        host=host or settings.CRDP_API_HOST,
+        port=port or settings.CRDP_API_PORT,
+        policy=policy or settings.CRDP_PROTECTION_POLICY,
+        timeout=5,
+    )
+
+    steps: list[dict] = []
+
+    # Step 1: try a minimal protect call using sample data to validate reachability
+    sample = getattr(settings, "CRDP_SAMPLE_DATA", "1234567890123")
+    payload = {"protection_policy_name": client.policy, "data": sample}
+    try:
+        resp = client.post_json(client.protect_url, payload)
+        step_debug = {
+            "stage": "protect_sample",
+            "url": resp.request_url,
+            "request": payload,
+            "status_code": resp.status_code,
+            "response": resp.body,
+            "headers": resp.request_headers,
+        }
+        steps.append(step_debug)
+        ok = resp.is_success
+        status = "healthy" if ok else "unhealthy"
+    except Exception as e:
+        steps.append({
+            "stage": "protect_sample",
+            "error": str(e),
+        })
+        status = "unhealthy"
+
     return {
-        "status": "healthy",
-        "crdp_api_host": settings.CRDP_API_HOST,
-        "crdp_api_port": settings.CRDP_API_PORT,
-        "protection_policy": settings.CRDP_PROTECTION_POLICY
+        "status": status,
+        "crdp_api_host": client.base_url.split("://", 1)[-1].split(":")[0],
+        "crdp_api_port": port or settings.CRDP_API_PORT,
+        "protection_policy": client.policy,
+        "steps": steps,
     }
