@@ -9,26 +9,6 @@
 - 프론트엔드: React + Vite (TypeScript)
 - 배포: Helm Chart (Kubernetes), 선택적으로 Ingress/MetalLB 사용
 
-## 🚀 Quick Start
-
-```bash
-# 1. 저장소 클론
-git clone https://github.com/sjrhee/crdp_webui.git
-cd crdp_webui
-
-# 2. 환경 설정
-cp backend/.env.example backend/.env
-# backend/.env 파일 편집 (CRDP 설정)
-
-# 3. 의존성 설치
-make setup
-
-# 4. 개발 서버 실행
-make dev
-```
-
-접속: http://localhost:5173/protect-reveal
-
 ## 구성
 
 - 목적: k8s 클러스터 내부의 애플리케이션에서 CRDP Protect/Reveal 기능을 빠르게 시험·데모하기 위한 최소 Web UI
@@ -79,32 +59,26 @@ docs/              # 트러블슈팅/런북 문서
 	- `CRDP_API_PORT` (기본: 32082)
 	- `CRDP_PROTECTION_POLICY` (기본: P03)
 
-## 빠른 시작
-
-1) 백엔드 실행
+## 🚀 Quick Start
 
 ```bash
-cd backend
-pip install -r requirements.txt
-export CRDP_API_HOST=192.168.0.231
-export CRDP_API_PORT=32082
-export CRDP_PROTECTION_POLICY=P03
-uvicorn app.main:app --reload --port 8000
+# 1. 저장소 클론
+git clone https://github.com/sjrhee/crdp_webui.git
+cd crdp_webui
+
+# 2. 환경 설정
+cp backend/.env.example backend/.env
+# backend/.env 파일 편집 (CRDP 설정)
+
+# 3. 의존성 설치
+make setup
+
+# 4. 개발 서버 실행
+make dev
 ```
 
-2) 프론트엔드 실행
+접속: http://localhost:5173/protect-reveal
 
-```bash
-cd frontend
-npm install
-npm run dev
-# 열기: http://localhost:5173/protect-reveal
-```
-
-## 빠른 설정
-
-- 프론트엔드 화면 상단 설정에서 CRDP 호스트/포트/정책을 변경할 수 있습니다.
-- Protect 입력 → Reveal 입력 자동 연결(옵션)로 빠른 실험이 가능합니다.
 
 ## 주요 기능
 
