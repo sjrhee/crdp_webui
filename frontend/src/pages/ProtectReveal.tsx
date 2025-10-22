@@ -32,7 +32,8 @@ type ProgressEntry =
   | { stage: 'protect'; debug?: Record<string, unknown> }
   | { stage: 'reveal'; debug?: Record<string, unknown> }
   | { stage: 'protect_bulk'; debug?: Record<string, unknown> }
-  | { stage: 'reveal_bulk'; debug?: Record<string, unknown> };
+  | { stage: 'reveal_bulk'; debug?: Record<string, unknown> }
+  | { stage: 'health'; debug?: Record<string, unknown> };
 
 interface Config {
   host: string;
@@ -49,10 +50,14 @@ function ConfigSection({
   config,
   onConfigChange,
   onReset,
+  onHealthCheck,
+  healthStatus,
 }: {
   config: Config;
   onConfigChange: (key: keyof Config, value: string) => void;
   onReset: () => void;
+  onHealthCheck: () => void;
+  healthStatus?: { ok: boolean; msg: string } | null;
 }) {
   return (
     <div className="card grid-span-2">
@@ -84,6 +89,22 @@ function ConfigSection({
           </div>
           <div className="spacer" />
           <div className="actions">
+            <button onClick={onHealthCheck} className="btn btn-success" style={{ marginRight: 8 }}>
+              Health Check
+            </button>
+            {healthStatus && (
+              <span
+                className="muted"
+                style={{
+                  marginRight: 12,
+                  color: healthStatus.ok ? '#16a34a' : '#dc2626',
+                  fontWeight: 600,
+                }}
+                title={healthStatus.msg}
+              >
+                {healthStatus.ok ? 'Healthy' : 'Unhealthy'}
+              </span>
+            )}
             <button onClick={onReset} className="btn btn-secondary">
               리셋
             </button>
@@ -221,6 +242,7 @@ export function ProtectReveal() {
 
   // Progress log
   const [progressLog, setProgressLog] = useState<ProgressEntry[]>([]);
+  const [healthStatus, setHealthStatus] = useState<{ ok: boolean; msg: string } | null>(null);
 
   // =========================================================================
   // Utility Functions
@@ -254,6 +276,22 @@ export function ProtectReveal() {
 
   const handleConfigChange = (key: keyof Config, value: string) => {
     setConfig((c) => ({ ...c, [key]: value }));
+  };
+
+  const handleHealthCheck = async () => {
+    try {
+      const res = await api.get('/api/crdp/health');
+      addProgress('health', res.data);
+      const { status, crdp_api_host, crdp_api_port, protection_policy } = res.data || {};
+      setHealthStatus({
+        ok: String(status).toLowerCase() === 'healthy',
+        msg: `host=${crdp_api_host}, port=${crdp_api_port}, policy=${protection_policy}`,
+      });
+    } catch (e: unknown) {
+      const err = (e as any)?.message ?? 'health check failed';
+      setHealthStatus({ ok: false, msg: String(err) });
+      addProgress('health', { error: String(err) });
+    }
   };
 
   // =========================================================================
@@ -376,7 +414,13 @@ export function ProtectReveal() {
         <p className="page-desc">데이터 암호화/복호화를 빠르게 검증하는 간단한 도구입니다.</p>
 
         <div className="grid-2">
-          <ConfigSection config={config} onConfigChange={handleConfigChange} onReset={resetAll} />
+          <ConfigSection
+            config={config}
+            onConfigChange={handleConfigChange}
+            onReset={resetAll}
+            onHealthCheck={handleHealthCheck}
+            healthStatus={healthStatus}
+          />
 
           <div className="card">
             <div className="card-body">
