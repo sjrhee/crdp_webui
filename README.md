@@ -24,7 +24,7 @@ docs/              # 트러블슈팅/런북 문서
 
 아래 다이어그램은 클러스터 내 CRDP 서비스(복수의 CRDP 인스턴스/서비스), MetalLB/Ingress, 그리고 CRDP를 사용하는 애플리케이션들이 어떻게 연결되는지 보여줍니다.
 
-![CRDP architecture diagram](./assets/crdp-architecture.png)
+![CRDP architecture diagram](./docs/CRDP_Diagram.png)
 
 요점 요약:
 - 여러 CRDP 서비스가 클러스터 내부에서 Replica Pod로 동작하고, 각 서비스는 내부 ClusterIP로 라우팅됩니다.
