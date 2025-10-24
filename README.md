@@ -1,7 +1,5 @@
 # CRDP WebUI
 
-[![CI](https://github.com/sjrhee/crdp_webui/actions/workflows/ci.yml/badge.svg)](https://github.com/sjrhee/crdp_webui/actions/workflows/ci.yml)
-
 ## 개요
 
 - 목적: k8s 클러스터 내부의 애플리케이션에서 CRDP Protect/Reveal 기능을 빠르게 시험·데모하기 위한 최소 Web UI
