@@ -446,7 +446,7 @@ export function ProtectReveal() {
 
               {protectResult && (
                 <SingleResultBox
-                  label="Protected Token"
+                  label="Protected Data"
                   value={protectResult.protected_data}
                   error={protectResult.error}
                   statusCode={protectResult.status_code}
@@ -459,12 +459,12 @@ export function ProtectReveal() {
             <div className="card-body">
               <h2>🔓 Reveal (복호화)</h2>
               <div className="form-group" style={{ marginBottom: 12 }}>
-                <label>Protected Token</label>
+                <label>Protected Data</label>
                 <input
                   type="text"
                   value={revealInput}
                   onChange={(e) => setRevealInput(e.target.value)}
-                  placeholder="복호화할 토큰 입력"
+                  placeholder="복호화할 데이터 입력"
                   style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace' }}
                 />
               </div>
@@ -504,7 +504,7 @@ export function ProtectReveal() {
 
               {bulkProtectResult && (
                 <ArrayResultBox
-                  label="Protected Tokens"
+                  label="Protected Data"
                   array={bulkProtectResult.protected_data_array}
                   error={bulkProtectResult.error}
                   statusCode={bulkProtectResult.status_code}
@@ -517,11 +517,11 @@ export function ProtectReveal() {
             <div className="card-body">
               <h2>📦 Bulk Reveal (대량 복호화)</h2>
               <div className="form-group" style={{ marginBottom: 12 }}>
-                <label>Protected Token 배열 (한 줄에 하나씩)</label>
+                <label>Protected Data Array (한 줄에 하나씩)</label>
                 <textarea
                   value={bulkRevealInput}
                   onChange={(e) => setBulkRevealInput(e.target.value)}
-                  placeholder="복호화할 토큰을 한 줄씩 입력"
+                  placeholder="복호화할 데이터를 한 줄씩 입력"
                   rows={5}
                   style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace' }}
                 />
