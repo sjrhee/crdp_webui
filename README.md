@@ -99,23 +99,6 @@ make dev
 - Reveal 탭에서 암호문을 입력하고 실행 → 평문을 확인
 - 벌크 탭에서는 줄바꿈(또는 배열) 기반으로 여러 건 처리
 
-## 기본 실행
-
-- 백엔드: `http://localhost:8000`
-- 프론트엔드: `http://localhost:5173/protect-reveal`
-- 주요 API:
-	- `POST /api/crdp/protect`
-	- `POST /api/crdp/reveal`
-	- `POST /api/crdp/protect-bulk`
-	- `POST /api/crdp/reveal-bulk`
-	- `GET  /api/crdp/health`
-
-## 에러 처리
-
-- CRDP 연결 실패: `CRDP_API_HOST/PORT` 값을 확인하세요.
-- CORS 오류: 백엔드 `CORS_ORIGINS` 환경 변수/설정을 점검하세요.
-- Ingress 접속 불가(선택 배포 시): Ingress 주소/hosts 파일 매핑을 확인하세요.
-
 ## 개발 및 테스트
 
 백엔드 테스트 실행:
