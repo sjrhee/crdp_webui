@@ -59,6 +59,14 @@ docs/              # 트러블슈팅/런북 문서
 
 ## 🚀 Quick Start
 
+### 현재 배포 상태 (2025-11-02)
+- **외부 접근**: MetalLB LoadBalancer를 통해 외부 IP 할당됨
+  - WebUI: `http://192.168.0.243`
+  - API: `http://192.168.0.242:8000`
+- **네임스페이스**: `crdp`
+- **이미지 레지스트리**: `192.168.0.231:5000` (로컬)
+
+### 로컬 개발
 ```bash
 # 1. 저장소 클론
 git clone https://github.com/sjrhee/crdp_webui.git
@@ -175,24 +183,25 @@ docker compose down
 
 ### 배포(Helm)
 
-로컬 레지스트리와 Ingress 환경을 고려한 값 파일: `helm/react-fastapi/values-local-registry.yaml`
+현재 배포된 설정:
+- 네임스페이스: `crdp`
+- 레지스트리: `192.168.0.231:5000`
+- 서비스 타입: LoadBalancer (외부 IP 자동 할당)
 
 ```bash
-kubectl create namespace crdp-webui || true
+# 현재 배포 상태 확인
+kubectl get pods,svc -n crdp
 
-# 필요 시 values-local-registry.yaml에서 이미지 태그/레지스트리/ingress host 조정
-helm upgrade --install crdp-webui ./helm/react-fastapi \
-	-n crdp-webui \
-	-f ./helm/react-fastapi/values-local-registry.yaml
+# 재배포 (필요시)
+kubectl create namespace crdp || true
+helm upgrade --install crdp-webui ./helm/react-fastapi -n crdp
 
-# 확인
-kubectl get pods,svc,ingress -n crdp-webui
-# Ingress: MetalLB가 할당한 IP로 접속 (예: http://crdp-webui.local 또는 http://<할당IP>)
+# 외부 IP 확인
+kubectl get svc -n crdp
+# EXTERNAL-IP: 192.168.0.243 (frontend), 192.168.0.242 (backend)
 ```
 
-참고
-- MetalLB는 LoadBalancer IP를 할당합니다. DNS가 없으면 IP로 직접 접근 가능합니다.
-- 호스트명 사용 시 클라이언트 `/etc/hosts`에 `192.168.0.240 crdp-webui.local` 추가(예시 IP).
+로컬 레지스트리와 Ingress 환경을 고려한 값 파일: `helm/react-fastapi/values.yaml`
 
 #### 빌드 후 Helm 배포(원클릭 스크립트)
 

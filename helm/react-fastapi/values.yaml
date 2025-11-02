@@ -1,14 +1,14 @@
 images:
   # 선택: 공통 레지스트리 프리픽스 (예: ghcr.io/OWNER 또는 registry.example.com/NAMESPACE)
-  registry: ""
+  registry: "192.168.0.231:5000"
   backend:
-    repository: "backend"
+    repository: "crdp_webui_backend"
     tag: "latest"
     pullPolicy: IfNotPresent
   frontend:
-    repository: "frontend"
+    repository: "crdp_webui_frontend"
     tag: "latest"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 
 # 선택: private 레지스트리 사용 시 imagePullSecret 이름들
 imagePullSecrets: []
@@ -26,9 +26,9 @@ backend:
     CRDP_PROTECTION_POLICY: "P03"
     # SECRET_KEY는 실제 배포에서 Secret로 주입 권장
     SECRET_KEY: "change_me_in_secret"
-    CORS_ORIGINS: "[\"http://localhost:5173\",\"http://127.0.0.1:5173\"]"
+    CORS_ORIGINS: "[\"http://localhost:5173\",\"http://127.0.0.1:5173\",\"http://192.168.0.243\"]"
   service:
-    type: ClusterIP
+    type: LoadBalancer
     port: 8000
   secret:
     enabled: false
@@ -38,7 +38,7 @@ backend:
 frontend:
   replicas: 1
   service:
-    type: ClusterIP
+    type: LoadBalancer
     port: 80
 
 ingress:
