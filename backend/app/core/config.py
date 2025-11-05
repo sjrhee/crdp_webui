@@ -17,12 +17,12 @@ class Settings(BaseSettings):
     DEMO_PASSWORD: str = "demo"
 
     # CRDP defaults
-    CRDP_API_HOST: str = "192.168.0.231"
+    CRDP_API_HOST: str = os.getenv('CRDP_HOST', "192.168.0.231")
     # Protect/Reveal API 포트 (v1 API)
-    CRDP_API_PORT: int = 32082
+    CRDP_API_PORT: int = int(os.getenv('CRDP_PORT', "32082"))
     # Healthz 전용 포트
     CRDP_HEALTHZ_PORT: int = 32080
-    CRDP_PROTECTION_POLICY: str = "P03"
+    CRDP_PROTECTION_POLICY: str = os.getenv('CRDP_POLICY', "P03")
     CRDP_SAMPLE_DATA: str = "1234567890123"
     # Accept JSON array or comma-separated string for CORS_ORIGINS
     @field_validator("CORS_ORIGINS", mode="before")
